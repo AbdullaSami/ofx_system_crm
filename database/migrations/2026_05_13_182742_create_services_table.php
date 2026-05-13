@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('department_id')->constrained()->onDelete('cascade');
+            $table->string('name');
+            $table->unique(['name', 'department_id']);
+            $table->string('slug')->unique();
+            $table->index('name');
+            $table->softDeletes();
+            $table->boolean('is_active')->default(true);
+            $table->decimal('price', 10, 2)->nullable();
+            $table->decimal('cost', 10, 2)->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

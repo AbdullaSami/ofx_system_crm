@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('slug')->unique();
-            $table->index('name');
+        Schema::create('lead_service', function (Blueprint $table) {
+            $table->foreignId('lead_id')->constrained()->onDelete('cascade');
+            $table->foreignId('service_id')->constrained()->onDelete('cascade');
+            $table->primary(['lead_id', 'service_id']);
+            $table->unique(['lead_id', 'service_id']);
             $table->softDeletes();
-            $table->boolean('is_active')->default(true);
-            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departments');
+        Schema::dropIfExists('lead_service');
     }
 };
