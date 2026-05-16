@@ -26,7 +26,7 @@ class LayoutAnswer extends Model
 
     public function contract(): BelongsTo
     {
-        return $this->belongsTo(Contracts::class, 'contract_id');
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 
     public function answeredBy(): BelongsTo

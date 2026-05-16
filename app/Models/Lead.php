@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Leads extends Model
+class Lead extends Model
 {
     use SoftDeletes;
 
@@ -30,17 +30,17 @@ class Leads extends Model
 
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(Employees::class, 'assigned_to');
+        return $this->belongsTo(Employee::class, 'assigned_to');
     }
 
     public function clients(): HasMany
     {
-        return $this->hasMany(Clients::class, 'lead_id');
+        return $this->hasMany(Client::class, 'lead_id');
     }
 
     public function services(): BelongsToMany
     {
-        return $this->belongsToMany(Services::class, 'lead_service', 'lead_id', 'service_id')
+        return $this->belongsToMany(Service::class, 'lead_service', 'lead_id', 'service_id')
             ->withTimestamps();
     }
 }

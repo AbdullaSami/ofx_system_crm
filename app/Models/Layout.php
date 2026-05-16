@@ -23,7 +23,7 @@ class Layout extends Model
 
     public function service(): BelongsTo
     {
-        return $this->belongsTo(Services::class, 'service_id');
+        return $this->belongsTo(Service::class, 'service_id');
     }
 
     public function layoutFields(): HasMany

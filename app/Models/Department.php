@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Departments extends Model
+class Department extends Model
 {
     use HasSlug, SoftDeletes;
 
@@ -29,19 +29,19 @@ class Departments extends Model
 
     public function services(): HasMany
     {
-        return $this->hasMany(Services::class, 'department_id');
+        return $this->hasMany(Service::class, 'department_id');
     }
 
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Teams::class, 'team_dep_service', 'department_id', 'team_id')
+        return $this->belongsToMany(Team::class, 'team_dep_service', 'department_id', 'team_id')
             ->withPivot('service_id')
             ->withTimestamps();
     }
 
     public function servicesViaTeams(): BelongsToMany
     {
-        return $this->belongsToMany(Services::class, 'team_dep_service', 'department_id', 'service_id')
+        return $this->belongsToMany(Service::class, 'team_dep_service', 'department_id', 'service_id')
             ->withPivot('team_id')
             ->withTimestamps();
     }

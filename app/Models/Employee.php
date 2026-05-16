@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Employees extends Model
+class Employee extends Model
 {
     use SoftDeletes;
 
@@ -37,42 +37,42 @@ class Employees extends Model
 
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Departments::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function manager(): BelongsTo
     {
-        return $this->belongsTo(Employees::class, 'manager_id');
+        return $this->belongsTo(Employee::class, 'manager_id');
     }
 
     public function subordinates(): HasMany
     {
-        return $this->hasMany(Employees::class, 'manager_id');
+        return $this->hasMany(Employee::class, 'manager_id');
     }
 
     public function leads(): HasMany
     {
-        return $this->hasMany(Leads::class, 'assigned_to');
+        return $this->hasMany(Lead::class, 'assigned_to');
     }
 
     public function clients(): HasMany
     {
-        return $this->hasMany(Clients::class, 'assigned_to');
+        return $this->hasMany(Client::class, 'assigned_to');
     }
 
     public function contracts(): HasMany
     {
-        return $this->hasMany(Contracts::class, 'employee_id');
+        return $this->hasMany(Contract::class, 'employee_id');
     }
 
     public function teamsAsLead(): HasMany
     {
-        return $this->hasMany(Teams::class, 'lead_id');
+        return $this->hasMany(Team::class, 'lead_id');
     }
 
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Teams::class, 'team_employee', 'employee_id', 'team_id')
+        return $this->belongsToMany(Team::class, 'team_employee', 'employee_id', 'team_id')
             ->withPivot('role', 'assigned_at', 'joined_at', 'left_at')
             ->withTimestamps();
     }
@@ -84,6 +84,6 @@ class Employees extends Model
 
     public function commissions(): HasMany
     {
-        return $this->hasMany(EmployeeCommissions::class, 'employee_id');
+        return $this->hasMany(EmployeeCommission::class, 'employee_id');
     }
 }

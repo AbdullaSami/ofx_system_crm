@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Collections extends Model
+class Collection extends Model
 {
     use SoftDeletes;
 
@@ -25,11 +25,11 @@ class Collections extends Model
 
     public function contract(): BelongsTo
     {
-        return $this->belongsTo(Contracts::class, 'contract_id');
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Clients::class, 'client_id');
+        return $this->belongsTo(Client::class, 'client_id');
     }
 }

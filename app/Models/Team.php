@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Teams extends Model
+class Team extends Model
 {
     use HasSlug, SoftDeletes;
 
@@ -36,26 +36,26 @@ class Teams extends Model
 
     public function lead(): BelongsTo
     {
-        return $this->belongsTo(Employees::class, 'lead_id');
+        return $this->belongsTo(Employee::class, 'lead_id');
     }
 
     public function employees(): BelongsToMany
     {
-        return $this->belongsToMany(Employees::class, 'team_employee', 'team_id', 'employee_id')
+        return $this->belongsToMany(Employee::class, 'team_employee', 'team_id', 'employee_id')
             ->withPivot('role', 'assigned_at', 'joined_at', 'left_at')
             ->withTimestamps();
     }
 
     public function departments(): BelongsToMany
     {
-        return $this->belongsToMany(Departments::class, 'team_dep_service', 'team_id', 'department_id')
+        return $this->belongsToMany(Department::class, 'team_dep_service', 'team_id', 'department_id')
             ->withPivot('service_id')
             ->withTimestamps();
     }
 
     public function services(): BelongsToMany
     {
-        return $this->belongsToMany(Services::class, 'team_dep_service', 'team_id', 'service_id')
+        return $this->belongsToMany(Service::class, 'team_dep_service', 'team_id', 'service_id')
             ->withPivot('department_id')
             ->withTimestamps();
     }

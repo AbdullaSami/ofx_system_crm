@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class EmployeeCommissions extends Model
+class EmployeeCommission extends Model
 {
     protected $fillable = [
         'employee_id',
@@ -15,6 +15,6 @@ class EmployeeCommissions extends Model
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employees::class, 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id');
     }
 }

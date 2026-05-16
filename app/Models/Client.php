@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Clients extends Model
+class Client extends Model
 {
     use SoftDeletes;
 
@@ -34,12 +34,12 @@ class Clients extends Model
 
     public function lead(): BelongsTo
     {
-        return $this->belongsTo(Leads::class, 'lead_id');
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(Employees::class, 'assigned_to');
+        return $this->belongsTo(Employee::class, 'assigned_to');
     }
 
     public function user(): BelongsTo
@@ -49,11 +49,11 @@ class Clients extends Model
 
     public function contracts(): HasMany
     {
-        return $this->hasMany(Contracts::class, 'client_id');
+        return $this->hasMany(Contract::class, 'client_id');
     }
 
     public function collections(): HasMany
     {
-        return $this->hasMany(Collections::class, 'client_id');
+        return $this->hasMany(Collection::class, 'client_id');
     }
 }

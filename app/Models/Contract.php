@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Contracts extends Model
+class Contract extends Model
 {
     use SoftDeletes;
 
@@ -33,12 +33,12 @@ class Contracts extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Clients::class, 'client_id');
+        return $this->belongsTo(Client::class, 'client_id');
     }
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employees::class, 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id');
     }
 
     public function signedBy(): BelongsTo
@@ -48,12 +48,12 @@ class Contracts extends Model
 
     public function collections(): HasMany
     {
-        return $this->hasMany(Collections::class, 'contract_id');
+        return $this->hasMany(Collection::class, 'contract_id');
     }
 
     public function services(): BelongsToMany
     {
-        return $this->belongsToMany(Services::class, 'contract_service', 'contract_id', 'service_id')
+        return $this->belongsToMany(Service::class, 'contract_service', 'contract_id', 'service_id')
             ->withPivot('quantity', 'unit_price', 'discount', 'billing_frequency', 'status')
             ->withTimestamps();
     }
