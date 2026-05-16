@@ -4,23 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Salary extends Model
+class EmployeeCommissions extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'employee_id',
+        'commission_rate',
         'amount',
-        'effective_date',
-        'currency',
-        'payment_frequency',
-        'bonus',
-        'deductions',
-        'status',
-        'payment_date',
-        'payment_method',
     ];
 
     public function employee(): BelongsTo

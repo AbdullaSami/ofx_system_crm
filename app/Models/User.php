@@ -9,6 +9,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Laravel\Sanctum\PersonalAccessToken;
+
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -23,6 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'email_verified_at',
     ];
 
     /**
@@ -46,5 +51,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Teams::class, 'owner_id');
+    }
+
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Clients::class, 'user_id');
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contracts::class, 'signed_by');
+    }
+
+    public function layoutAnswers(): HasMany
+    {
+        return $this->hasMany(LayoutAnswer::class, 'answered_by');
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employees::class, 'user_id');
+    }
+
+    public function personalAccessTokens(): MorphMany
+    {
+        return $this->morphMany(PersonalAccessToken::class, 'tokenable');
     }
 }

@@ -3,8 +3,59 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Services extends Model
 {
-    //
+    use SoftDeletes;
+
+    protected $fillable = [
+        'department_id',
+        'name',
+        'slug',
+        'is_active',
+        'price',
+        'cost',
+        'description',
+    ];
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Departments::class, 'department_id');
+    }
+
+    public function layouts(): HasMany
+    {
+        return $this->hasMany(Layout::class, 'service_id');
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Teams::class, 'team_dep_service', 'service_id', 'team_id')
+            ->withPivot('department_id')
+            ->withTimestamps();
+    }
+
+    public function departmentsViaTeams(): BelongsToMany
+    {
+        return $this->belongsToMany(Departments::class, 'team_dep_service', 'service_id', 'department_id')
+            ->withPivot('team_id')
+            ->withTimestamps();
+    }
+
+    public function contracts(): BelongsToMany
+    {
+        return $this->belongsToMany(Contracts::class, 'contract_service', 'service_id', 'contract_id')
+            ->withPivot('quantity', 'unit_price', 'discount', 'billing_frequency', 'status')
+            ->withTimestamps();
+    }
+
+    public function leads(): BelongsToMany
+    {
+        return $this->belongsToMany(Leads::class, 'lead_service', 'service_id', 'lead_id')
+            ->withTimestamps();
+    }
 }
