@@ -25,24 +25,29 @@ class ServiceController extends Controller
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'department_id' => 'required|exists:departments,id',
+
                 // Layout
-                'layout.label' => 'nullable|string',
-                'layout.is_active' => 'boolean',
-                'layout.is_default' => 'boolean',
-                'layout.version' => 'nullable|string',
-                'layout.description' => 'nullable|string',
-                'layout.sort_order' => 'integer',
-                // Layout fields
                 'layout' => 'nullable|array',
-                'layout.*.field_name' => 'required|string',
-                'layout.*.field_type' => 'required|in:text,number,email,date,select,checkbox,textarea,file',
-                'layout.*.is_required' => 'boolean',
-                'layout.*.sort_order' => 'integer',
-                'layout.*.default_value' => 'nullable|string',
-                'layout.*.validation_rules' => 'nullable|string',
-                'layout.*.options' => 'nullable|array',
-                'layout.*.placeholder' => 'nullable|string',
-                'layout.*.help_text' => 'nullable|string',
+
+                'layout.label' => 'nullable|string|max:255',
+                'layout.is_active' => 'nullable|boolean',
+                'layout.is_default' => 'nullable|boolean',
+                'layout.version' => 'nullable|string|max:50',
+                'layout.description' => 'nullable|string',
+                'layout.sort_order' => 'nullable|integer',
+
+                // Layout fields
+                'layout.fields' => 'nullable|array',
+
+                'layout.fields.*.field_name' => 'required|string|max:255',
+                'layout.fields.*.field_type' => 'required|in:text,number,email,date,select,checkbox,textarea,file',
+                'layout.fields.*.is_required' => 'nullable|boolean',
+                'layout.fields.*.sort_order' => 'nullable|integer',
+                'layout.fields.*.default_value' => 'nullable|string',
+                'layout.fields.*.validation_rules' => 'nullable|string',
+                'layout.fields.*.options' => 'nullable|array',
+                'layout.fields.*.placeholder' => 'nullable|string|max:255',
+                'layout.fields.*.help_text' => 'nullable|string',
             ]);
 
             $service = Service::create(
