@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Team;
+use App\Models\Service;
 class TeamController extends Controller
 {
     public function index()
@@ -29,7 +30,12 @@ class TeamController extends Controller
                 'name' => $validate['name'],
             ]);
             if ($validate['service_id']) {
-                $team->services()->attach($validate['service_id']);
+                $services = Service::whereIn('id', $validate['service_id'])->get();
+                $pivotData = [];
+                foreach ($services as $service) {
+                    $pivotData[$service->id] = ['department_id' => $service->department_id];
+                }
+                $team->services()->attach($pivotData);
             }
             return response()->json($team, 201);
         } catch (\Exception $e) {

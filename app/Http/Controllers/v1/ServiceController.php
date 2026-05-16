@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class ServiceController extends Controller
 {
@@ -79,43 +80,134 @@ class ServiceController extends Controller
 
     public function update(Request $request, $service)
     {
+        DB::beginTransaction();
+
         try {
+
             $service = Service::where('slug', $service)->first();
+
             if (!$service) {
-                return response()->json(['message' => 'Service not found'], 404);
+                return response()->json([
+                    'message' => 'Service not found'
+                ], 404);
             }
+
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
-                'department_id' => 'required|exists:departments,id',
+                'department_id' => 'nullable|exists:departments,id',
+
                 // Layout
-                'layout.label' => 'nullable|string',
-                'layout.is_active' => 'boolean',
-                'layout.is_default' => 'boolean',
-                'layout.version' => 'nullable|string',
-                'layout.description' => 'nullable|string',
-                'layout.sort_order' => 'integer',
-                // Layout fields
                 'layout' => 'nullable|array',
-                'layout.*.field_name' => 'required|string',
-                'layout.*.field_type' => 'required|in:text,number,email,date,select,checkbox,textarea,file',
-                'layout.*.is_required' => 'boolean',
-                'layout.*.sort_order' => 'integer',
-                'layout.*.default_value' => 'nullable|string',
-                'layout.*.validation_rules' => 'nullable|string',
-                'layout.*.options' => 'nullable|array',
-                'layout.*.placeholder' => 'nullable|string',
-                'layout.*.help_text' => 'nullable|string',
+
+                'layout.label' => 'nullable|string|max:255',
+                'layout.is_active' => 'nullable|boolean',
+                'layout.is_default' => 'nullable|boolean',
+                'layout.description' => 'nullable|string',
+                'layout.sort_order' => 'nullable|integer',
+
+                // Fields
+                'layout.fields' => 'nullable|array',
+
+                'layout.fields.*.field_name' => 'required|string|max:255',
+                'layout.fields.*.field_type' => 'required|in:text,number,email,date,select,checkbox,textarea,file',
+                'layout.fields.*.is_required' => 'nullable|boolean',
+                'layout.fields.*.sort_order' => 'nullable|integer',
+                'layout.fields.*.default_value' => 'nullable|string',
+                'layout.fields.*.validation_rules' => 'nullable|string',
+                'layout.fields.*.options' => 'nullable|array',
+                'layout.fields.*.placeholder' => 'nullable|string|max:255',
+                'layout.fields.*.help_text' => 'nullable|string',
             ]);
+
+            /*
+        |--------------------------------------------------------------------------
+        | Update service basic info
+        |--------------------------------------------------------------------------
+        */
+
             $service->update(
-                array_diff_key($validated, array_flip(['layout']))
+                collect($validated)
+                    ->except('layout')
+                    ->toArray()
             );
-            if (isset($validated['layout']) && !empty($validated['layout'])) {
-                $service->layouts()->update($validated['layout']);
+
+            /*
+        |--------------------------------------------------------------------------
+        | Create new layout version
+        |--------------------------------------------------------------------------
+        */
+
+            if (isset($validated['layout'])) {
+
+                $layoutData = $validated['layout'];
+
+                // Disable old default layouts if new one is default
+                if (($layoutData['is_default'] ?? false) === true) {
+
+                    $service->layouts()->update([
+                        'is_default' => false
+                    ]);
+                }
+
+                // Get latest version
+                $latestLayout = $service->layouts()
+                    ->latest('id')
+                    ->first();
+
+                $newVersion = $latestLayout
+                    ? ((float) $latestLayout->version + 1)
+                    : 1.0;
+
+                // Create new layout version
+                $layout = $service->layouts()->create([
+                    'label' => $layoutData['label'] ?? $service->name,
+                    'is_active' => $layoutData['is_active'] ?? true,
+                    'is_default' => $layoutData['is_default'] ?? false,
+                    'version' => (string) $newVersion,
+                    'description' => $layoutData['description'] ?? null,
+                    'sort_order' => $layoutData['sort_order'] ?? 0,
+                ]);
+
+                /*
+            |--------------------------------------------------------------------------
+            | Create layout fields
+            |--------------------------------------------------------------------------
+            */
+
+                if (!empty($layoutData['fields'])) {
+
+                    foreach ($layoutData['fields'] as $field) {
+
+                        $layout->fields()->create([
+                            'field_name' => $field['field_name'],
+                            'field_type' => $field['field_type'],
+                            'is_required' => $field['is_required'] ?? false,
+                            'sort_order' => $field['sort_order'] ?? 0,
+                            'default_value' => $field['default_value'] ?? null,
+                            'validation_rules' => $field['validation_rules'] ?? null,
+                            'options' => $field['options'] ?? null,
+                            'placeholder' => $field['placeholder'] ?? null,
+                            'help_text' => $field['help_text'] ?? null,
+                        ]);
+                    }
+                }
             }
-            return response()->json($service);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Service updated successfully',
+                'data' => $service->load('layouts.fields')
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
