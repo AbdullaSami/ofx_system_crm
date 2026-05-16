@@ -43,18 +43,20 @@ class TeamController extends Controller
         }
     }
 
-    public function show(Team $team)
+    public function show($team)
     {
         try {
+            $team = Team::where('slug', $team)->first();
             return response()->json($team);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
     }
 
-    public function update(Request $request, Team $team)
+    public function update(Request $request, $team)
     {
         try {
+            $team = Team::where('slug', $team)->first();
             $team->update($request->all());
             return response()->json($team);
         } catch (\Exception $e) {
@@ -62,9 +64,10 @@ class TeamController extends Controller
         }
     }
 
-    public function destroy(Team $team)
+    public function destroy($team)
     {
         try {
+            $team = Team::where('slug', $team)->first();
             $team->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
