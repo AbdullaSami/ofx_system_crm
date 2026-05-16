@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 
 class Teams extends Model
 {
-    use SoftDeletes;
+    use HasSlug, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -19,6 +21,13 @@ class Teams extends Model
         'owner_id',
         'lead_id',
     ];
+
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
+    }
 
     public function owner(): BelongsTo
     {
