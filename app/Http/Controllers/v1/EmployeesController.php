@@ -10,13 +10,13 @@ class EmployeesController extends Controller
 {
     public function index()
     {
-        $employees = Employee::with(['salaries', 'roles'])->get();
+        $employees = Employee::with(['salaries'])->get();
         return response()->json($employees);
     }
 
     public function show($id)
     {
-        $employee = Employee::with(['salaries', 'roles'])->findOrFail($id);
+        $employee = Employee::with(['salaries'])->findOrFail($id);
         if (!$employee) {
             return response()->json(['message' => 'Employee not found'], 404);
         }
@@ -101,7 +101,6 @@ class EmployeesController extends Controller
             'address'       => 'nullable|string|max:500',
             'email'         => 'sometimes|email|unique:employees,email,' . $id,
             'whatsapp'      => 'nullable|string|max:20',
-            'status'        => 'sometimes|in:active,inactive',
             'salary'        => 'nullable|numeric',
             'target'        => 'nullable|numeric',
             'team_id'       => 'nullable|exists:teams,id',
@@ -113,36 +112,36 @@ class EmployeesController extends Controller
             'commissions.*.commission_rate' => 'required_with:commissions|numeric',
         ]);
 
+        // Update core employee fields
         $employee->update([
             'employee_name' => $validatedData['employee_name'] ?? $employee->employee_name,
-            'phone'         => $validatedData['phone'] ?? $employee->phone,
-            'employee_code' => $validatedData['employee_code'] ?? $employee->employee_code,
-            'address'       => $validatedData['address'] ?? $employee->address,
+            'phone'         => array_key_exists('phone', $validatedData) ? $validatedData['phone'] : $employee->phone,
+            'employee_code' => array_key_exists('employee_code', $validatedData) ? $validatedData['employee_code'] : $employee->employee_code,
+            'address'       => array_key_exists('address', $validatedData) ? $validatedData['address'] : $employee->address,
             'email'         => $validatedData['email'] ?? $employee->email,
-            'whatsapp'      => $validatedData['whatsapp'] ?? $employee->whatsapp,
-            'status'        => $validatedData['status'] ?? $employee->status,
+            'whatsapp'      => array_key_exists('whatsapp', $validatedData) ? $validatedData['whatsapp'] : $employee->whatsapp,
         ]);
 
-        // Update or create linked user
+        // Handle user account
         if ($validatedData['is_user'] ?? false) {
             $user = $employee->user()->updateOrCreate(
                 ['email' => $employee->email],
                 [
                     'name'     => $employee->employee_name,
-                    'email'    => $validatedData['email'] ?? $employee->email,
+                    'email'    => $employee->email,
                     'password' => isset($validatedData['password'])
                         ? bcrypt($validatedData['password'])
-                        : $employee->user->password,
+                        : ($employee->user?->password ?? bcrypt('defaultpassword')),
                 ]
             );
+
+            // Sync role on user
             if (isset($validatedData['role'])) {
                 $user->syncRoles([$validatedData['role']]);
             }
         }
 
-        // Sync role
-
-        // Add new salary record if salary changed
+        // Add new salary record if a new salary is provided
         if (isset($validatedData['salary'])) {
             $employee->salaries()->create([
                 'amount'         => $validatedData['salary'],
