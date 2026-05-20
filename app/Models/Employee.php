@@ -74,7 +74,7 @@ class Employee extends Model
     {
         return $this->belongsToMany(Team::class, 'team_employee', 'employee_id', 'team_id')
             ->withPivot('role', 'assigned_at', 'joined_at', 'left_at')
-            ->withTimestamps();
+            ->withoutTimestamps();
     }
 
     public function salaries(): HasMany
