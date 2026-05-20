@@ -11,7 +11,7 @@ class TeamController extends Controller
     public function index()
     {
         try {
-            $teams = Team::all();
+            $teams = Team::with('services')->get();
             return response()->json($teams);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
