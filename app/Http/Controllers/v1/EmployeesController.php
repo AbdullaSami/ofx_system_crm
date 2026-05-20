@@ -55,16 +55,16 @@ class EmployeesController extends Controller
         ]);
 
         if ($validatedData['is_user'] ?? false) {
-            $employee->user()->create([
+            $user = $employee->user()->create([
                 'name' => $employee->employee_name,
                 'email' => $employee->email,
                 'password' => bcrypt($validatedData['password'] ?? 'defaultpassword'), // You should handle password properly
             ]);
+            if (isset($validatedData['role'])) {
+                $user->assignRole($validatedData['role']);
+            }
         }
 
-        if (isset($validatedData['role'])) {
-            $employee->assignRole($validatedData['role']);
-        }
 
         if (isset($validatedData['salary'])) {
             $employee->salaries()->create([
@@ -126,7 +126,7 @@ class EmployeesController extends Controller
 
         // Update or create linked user
         if ($validatedData['is_user'] ?? false) {
-            $employee->user()->updateOrCreate(
+            $user = $employee->user()->updateOrCreate(
                 ['email' => $employee->email],
                 [
                     'name'     => $employee->employee_name,
@@ -136,12 +136,12 @@ class EmployeesController extends Controller
                         : $employee->user->password,
                 ]
             );
+            if (isset($validatedData['role'])) {
+                $user->syncRoles([$validatedData['role']]);
+            }
         }
 
         // Sync role
-        if (isset($validatedData['role'])) {
-            $employee->syncRoles([$validatedData['role']]);
-        }
 
         // Add new salary record if salary changed
         if (isset($validatedData['salary'])) {
