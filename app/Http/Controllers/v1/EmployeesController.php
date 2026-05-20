@@ -32,7 +32,6 @@ class EmployeesController extends Controller
             'address' => 'nullable|string|max:500',
             'email' => 'required|email|unique:employees,email',
             'whatsapp' => 'nullable|string|max:20',
-            'status' => 'required|in:active,inactive',
             'salary' => 'nullable|numeric',
             'target' => 'nullable|numeric',
             'team_id' => 'nullable|exists:teams,id',
