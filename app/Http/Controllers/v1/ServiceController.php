@@ -59,7 +59,7 @@ class ServiceController extends Controller
                 $layout = $service->layouts()->create($validated['layout']);
                 if (isset($validated['layout']['fields']) && !empty($validated['layout']['fields'])) {
                     foreach ($validated['layout']['fields'] as $field) {
-                        $layout->fields()->create($field);
+                        $layout->layoutFields()->create($field);
                     }
                 }
             }
