@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('lead_name');
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->string('email')->unique();
+            $table->string('email')->nullable()->unique();
             $table->string('phone')->nullable();
             $table->string('whatsapp')->nullable();
             $table->string('company')->nullable();
