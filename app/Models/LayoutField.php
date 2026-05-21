@@ -24,6 +24,11 @@ class LayoutField extends Model
         'field_type',
     ];
 
+    // LayoutField.php
+    protected $casts = [
+        'options'          => 'array',
+        'validation_rules' => 'array',
+    ];
     public function layout(): BelongsTo
     {
         return $this->belongsTo(Layout::class, 'layout_id');

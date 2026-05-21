@@ -59,6 +59,15 @@ class ServiceController extends Controller
                 $layout = $service->layouts()->create($validated['layout']);
                 if (isset($validated['layout']['fields']) && !empty($validated['layout']['fields'])) {
                     foreach ($validated['layout']['fields'] as $field) {
+                        // Encode array fields to JSON strings before persisting
+                        if (isset($field['options']) && is_array($field['options'])) {
+                            $field['options'] = json_encode($field['options']);
+                        }
+
+                        if (isset($field['validation_rules']) && is_array($field['validation_rules'])) {
+                            $field['validation_rules'] = json_encode($field['validation_rules']);
+                        }
+
                         $layout->layoutFields()->create($field);
                     }
                 }
