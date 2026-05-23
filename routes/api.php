@@ -8,7 +8,7 @@ use App\Http\Controllers\v1\ServiceController;
 use App\Http\Controllers\v1\TeamController;
 use App\Http\Controllers\v1\EmployeesController;
 use App\Http\Controllers\v1\LeadController;
-
+use App\Http\Controllers\v1\FollowUpController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -23,5 +23,5 @@ Route::apiResource('services', ServiceController::class);
 Route::apiResource('teams', TeamController::class);
 Route::apiResource('employees', EmployeesController::class);
 Route::apiResource('leads', LeadController::class);
-
+Route::apiResource('follow-ups', FollowUpController::class);
 

@@ -43,4 +43,9 @@ class Lead extends Model
         return $this->belongsToMany(Service::class, 'lead_service', 'lead_id', 'service_id')
             ->withTimestamps();
     }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class, 'lead_id');
+    }
 }

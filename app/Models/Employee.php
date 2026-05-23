@@ -86,4 +86,9 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeCommission::class, 'employee_id');
     }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class, 'employee_id');
+    }
 }
