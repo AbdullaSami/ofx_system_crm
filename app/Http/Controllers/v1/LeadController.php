@@ -10,7 +10,7 @@ class LeadController extends Controller
     public function index()
     {
         try {
-            $leads = Lead::all();
+            $leads = Lead::with(['assignedTo', 'followUps'])->get();
             return response()->json(['message' => 'Leads fetched successfully', 'data' => $leads], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch leads', 'details' => $e->getMessage()], 500);
@@ -42,7 +42,7 @@ class LeadController extends Controller
     public function show($id)
     {
         try {
-            $lead = Lead::findOrFail($id);
+            $lead = Lead::with(['assignedTo', 'followUps'])->findOrFail($id);
             return response()->json(['message' => 'Lead fetched successfully', 'data' => $lead], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch lead', 'details' => $e->getMessage()], 500);
