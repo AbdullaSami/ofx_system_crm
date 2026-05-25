@@ -117,65 +117,71 @@ class EmployeesController extends Controller
             'commissions.*.commission_rate' => 'required_with:commissions|numeric',
         ]);
 
-        // Update core employee fields
-        $employee->update([
-            'employee_name' => $validatedData['employee_name'] ?? $employee->employee_name,
-            'phone'         => array_key_exists('phone', $validatedData) ? $validatedData['phone'] : $employee->phone,
-            'employee_code' => array_key_exists('employee_code', $validatedData) ? $validatedData['employee_code'] : $employee->employee_code,
-            'address'       => array_key_exists('address', $validatedData) ? $validatedData['address'] : $employee->address,
-            'email'         => $validatedData['email'] ?? $employee->email,
-            'whatsapp'      => array_key_exists('whatsapp', $validatedData) ? $validatedData['whatsapp'] : $employee->whatsapp,
-        ]);
+        DB::beginTransaction();
+        try {
+            // Update core employee fields
+            $employee->update([
+                'employee_name' => $validatedData['employee_name'] ?? $employee->employee_name,
+                'phone'         => array_key_exists('phone', $validatedData) ? $validatedData['phone'] : $employee->phone,
+                'employee_code' => array_key_exists('employee_code', $validatedData) ? $validatedData['employee_code'] : $employee->employee_code,
+                'address'       => array_key_exists('address', $validatedData) ? $validatedData['address'] : $employee->address,
+                'email'         => $validatedData['email'] ?? $employee->email,
+                'whatsapp'      => array_key_exists('whatsapp', $validatedData) ? $validatedData['whatsapp'] : $employee->whatsapp,
+            ]);
 
-        // Handle user account
-        if ($validatedData['is_user'] ?? false) {
-            $user = $employee->user()->updateOrCreate(
-                ['email' => $employee->email],
-                [
-                    'name'     => $employee->employee_name,
-                    'email'    => $employee->email,
-                    'password' => isset($validatedData['password'])
-                        ? bcrypt($validatedData['password'])
-                        : ($employee->user?->password ?? bcrypt('defaultpassword')),
-                ]
-            );
+            // Handle user account
+            if ($validatedData['is_user'] ?? false) {
+                $user = $employee->user()->updateOrCreate(
+                    ['email' => $employee->email],
+                    [
+                        'name'     => $employee->employee_name,
+                        'email'    => $employee->email,
+                        'password' => isset($validatedData['password'])
+                            ? bcrypt($validatedData['password'])
+                            : ($employee->user?->password ?? bcrypt('defaultpassword')),
+                    ]
+                );
 
-            // Sync role on user
-            if (isset($validatedData['role'])) {
-                $user->syncRoles([$validatedData['role']]);
+                if (isset($validatedData['role'])) {
+                    $user->syncRoles([$validatedData['role']]);
+                }
             }
-        }
 
-        // Add new salary record if a new salary is provided
-        if (isset($validatedData['salary'])) {
-            $employee->salaries()->create([
-                'amount'         => $validatedData['salary'],
-                'effective_date' => now(),
-            ]);
-        }
-
-        // Sync team
-        if (isset($validatedData['team_id'])) {
-            $employee->teams()->syncWithoutDetaching([
-                $validatedData['team_id'] => [
-                    'role'        => $validatedData['role'] ?? 'Member',
-                    'assigned_at' => now(),
-                ],
-            ]);
-        }
-
-        // Replace commissions if provided
-        if (isset($validatedData['commissions'])) {
-            $employee->commissions()->delete();
-            foreach ($validatedData['commissions'] as $commission) {
-                $employee->commissions()->create([
-                    'amount'          => $commission['amount'],
-                    'commission_rate' => $commission['commission_rate'],
+            // Add new salary record if provided
+            if (isset($validatedData['salary'])) {
+                $employee->salaries()->create([
+                    'amount'         => $validatedData['salary'],
+                    'effective_date' => now(),
                 ]);
             }
-        }
 
-        return response()->json($employee->fresh(), 200);
+            // Sync team membership
+            if (isset($validatedData['team_id'])) {
+                $employee->teams()->syncWithoutDetaching([
+                    $validatedData['team_id'] => [
+                        'role'        => $validatedData['role'] ?? 'Member',
+                        'assigned_at' => now(),
+                    ],
+                ]);
+            }
+
+            // Replace commissions if provided
+            if (isset($validatedData['commissions'])) {
+                $employee->commissions()->delete();
+                foreach ($validatedData['commissions'] as $commission) {
+                    $employee->commissions()->create([
+                        'amount'          => $commission['amount'],
+                        'commission_rate' => $commission['commission_rate'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return response()->json($employee->fresh(), 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to update employee', 'error' => $e->getMessage()], 500);
+        }
     }
 
 
