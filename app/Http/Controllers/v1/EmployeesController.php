@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EmployeesController extends Controller
 {
@@ -43,51 +44,55 @@ class EmployeesController extends Controller
             'commissions.*.commission_rate' => 'required_with:commissions|numeric',
 
         ]);
-        $employee = Employee::create([
-            'employee_name' => $validatedData['employee_name'],
-            'phone' => $validatedData['phone'] ?? null,
-            'employee_code' => $validatedData['employee_code'] ?? null,
-            'address' => $validatedData['address'] ?? null,
-            'email' => $validatedData['email'],
-            'whatsapp' => $validatedData['whatsapp'] ?? null,
-            'status' => 'active',
-        ]);
-
-        if ($validatedData['is_user'] ?? false) {
-            $user = $employee->user()->create([
-                'name' => $employee->employee_name,
-                'email' => $employee->email,
-                'password' => bcrypt($validatedData['password'] ?? 'defaultpassword'), // You should handle password properly
+        DB::beginTransaction();
+        try {
+            $employee = Employee::create([
+                'employee_name' => $validatedData['employee_name'],
+                'phone' => $validatedData['phone'] ?? null,
+                'employee_code' => $validatedData['employee_code'] ?? null,
+                'address' => $validatedData['address'] ?? null,
+                'email' => $validatedData['email'],
+                'whatsapp' => $validatedData['whatsapp'] ?? null,
+                'status' => 'active',
             ]);
-            if (isset($validatedData['role'])) {
-                $user->assignRole($validatedData['role']);
+
+            if ($validatedData['is_user'] ?? false) {
+                $user = $employee->user()->create([
+                    'name' => $employee->employee_name,
+                    'email' => $employee->email,
+                    'password' => bcrypt($validatedData['password'] ?? 'defaultpassword'), // You should handle password properly
+                ]);
+                if (isset($validatedData['role'])) {
+                    $user->assignRole($validatedData['role']);
+                }
             }
-        }
 
 
-        if (isset($validatedData['salary'])) {
-            $employee->salaries()->create([
-                'amount' => $validatedData['salary'],
-                'effective_date' => now(),
-            ]);
-        }
-
-        if (isset($validatedData['team_id'])) {
-            $employee->teams()->attach($validatedData['team_id'], ['role' => $validatedData['role'] ?? 'Member', 'assigned_at' => now()]);
-        }
-
-        if (isset($validatedData['commissions'])) {
-            foreach ($validatedData['commissions'] as $commission) {
-                $employee->commissions()->create([
-                    'amount' => $commission['amount'],
-                    'commission_rate' => $commission['commission_rate'],
+            if (isset($validatedData['salary'])) {
+                $employee->salaries()->create([
+                    'amount' => $validatedData['salary'],
+                    'effective_date' => now(),
                 ]);
             }
+
+            if (isset($validatedData['team_id'])) {
+                $employee->teams()->attach($validatedData['team_id'], ['role' => $validatedData['role'] ?? 'Member', 'assigned_at' => now()]);
+            }
+
+            if (isset($validatedData['commissions'])) {
+                foreach ($validatedData['commissions'] as $commission) {
+                    $employee->commissions()->create([
+                        'amount' => $commission['amount'],
+                        'commission_rate' => $commission['commission_rate'],
+                    ]);
+                }
+            }
+            DB::commit();
+            return response()->json($employee, 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to create employee', 'error' => $e->getMessage()], 500);
         }
-
-
-
-        return response()->json($employee, 201);
     }
 
     public function update(Request $request, $id)
