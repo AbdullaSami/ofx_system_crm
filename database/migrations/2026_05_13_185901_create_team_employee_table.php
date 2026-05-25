@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->primary(['team_id', 'employee_id']);
 
-            $table->enum('role', ['lead', 'member', 'observer'])
+            $table->string('role')
                 ->default('member');
 
             $table->timestamp('assigned_at')
