@@ -18,7 +18,7 @@ class ServiceController extends Controller
             return response()->json(
                 $services->map(function($service) {
                     $arr = $service->toArray();
-                    unset($arr['department_id'], $arr['department']);
+                    unset($arr['department_id'], $arr['id'], $arr['department']);
                     $arr['department_name'] = $service->department->name ?? null;
                     return $arr;
                 })
