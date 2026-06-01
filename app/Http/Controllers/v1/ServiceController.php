@@ -13,7 +13,16 @@ class ServiceController extends Controller
     {
         try {
             $services = Service::with(['department'])->get();
-            return response()->json($services);
+
+
+            return response()->json(
+                $services->map(function($service) {
+                    $arr = $service->toArray();
+                    unset($arr['department_id'], $arr['department']);
+                    $arr['department_name'] = $service->department->name ?? null;
+                    return $arr;
+                })
+            );
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
