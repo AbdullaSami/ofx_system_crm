@@ -55,17 +55,17 @@ class User extends Authenticatable
 
     public function teams(): HasMany
     {
-        return $this->hasMany(Teams::class, 'owner_id');
+        return $this->hasMany(Team::class, 'owner_id');
     }
 
     public function clients(): HasMany
     {
-        return $this->hasMany(Clients::class, 'user_id');
+        return $this->hasMany(Client::class, 'user_id');
     }
 
     public function contracts(): HasMany
     {
-        return $this->hasMany(Contracts::class, 'signed_by');
+        return $this->hasMany(Contract::class, 'signed_by');
     }
 
     public function layoutAnswers(): HasMany
@@ -73,9 +73,9 @@ class User extends Authenticatable
         return $this->hasMany(LayoutAnswer::class, 'answered_by');
     }
 
-    public function employees(): HasMany
+    public function employee(): HasMany
     {
-        return $this->hasMany(Employees::class, 'user_id');
+        return $this->hasMany(Employee::class, 'user_id');
     }
 
     public function personalAccessTokens(): MorphMany

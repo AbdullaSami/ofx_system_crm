@@ -9,7 +9,7 @@ use App\Http\Controllers\v1\TeamController;
 use App\Http\Controllers\v1\EmployeesController;
 use App\Http\Controllers\v1\LeadController;
 use App\Http\Controllers\v1\FollowUpController;
-
+use App\Http\Controllers\v1\ContractController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -24,4 +24,4 @@ Route::apiResource('teams', TeamController::class);
 Route::apiResource('employees', EmployeesController::class);
 Route::apiResource('leads', LeadController::class);
 Route::apiResource('follow-ups', FollowUpController::class);
-
+Route::apiResource('contracts', ContractController::class);
