@@ -12,7 +12,7 @@ class ServiceController extends Controller
     public function index()
     {
         try {
-            $services = Service::all();
+            $services = Service::with(['department'])->get();
             return response()->json($services);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
