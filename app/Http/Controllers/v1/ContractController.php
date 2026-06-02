@@ -97,28 +97,41 @@ public function store(StoreContractRequest $request, ContractService $contractSe
         ->setStatusCode(201);
 }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
 
+/**
+ * Display the specified resource.
+*
+* @param  int  $id
+* @return \Illuminate\Http\Response
+*/
+public function show($id)
+{
+    //
+    }
+    
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    *
+    * @param  \Illuminate\Http\Request  $request
+    * @param  int  $id
+    * @return \Illuminate\Http\Response
+    */
+    public function update(
+        UpdateContractRequest $request,
+        Contract $contract
+    )
     {
-        //
+        $contract = $this->contractService->update(
+            $contract,
+            $request->validated()
+        );
+    
+        return $this->successResponse(
+            'Contract updated successfully.',
+            $contract
+        );
     }
+
 
     /**
      * Remove the specified resource from storage.

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Contract;
 use App\Models\Client;
 use App\Models\Service;
+use App\Models\LayoutAnswer;
 use Illuminate\Support\Facades\DB;
 
 // app/Services/ContractService.php
@@ -54,6 +55,50 @@ class ContractService
             return $contract;
         });
     }
+
+        public function update(Contract $contract, array $data): Contract
+    {
+        return DB::transaction(function () use ($contract, $data) {
+
+            $contract->update([
+                'employee_id'    => $data['employee_id'],
+                'start_date'     => $data['start_date'],
+                'end_date'       => $data['end_date'],
+                'amount'         => $data['amount'],
+                'discount'       => $data['discount'] ?? null,
+                'notes'          => $data['notes'] ?? null,
+                'status'         => $data['status'],
+                'signed_by'      => $data['signed_by'] ?? null,
+                'payment_method' => $data['payment_method'] ?? null,
+            ]);
+
+            if (isset($data['services'])) {
+
+                $services = [];
+
+                foreach ($data['services'] as $service) {
+                    $services[$service['id']] = [
+                        'unit_price' => $service['unit_price'],
+                    ];
+                }
+
+                $contract->services()->sync($services);
+
+                LayoutAnswer::where(
+                    'contract_id',
+                    $contract->id
+                )->delete();
+
+                $this->storeLayoutAnswers(
+                    $contract,
+                    $data['services']
+                );
+            }
+
+            return $contract->fresh();
+        });
+    }
+
   protected function storeLayoutAnswers(
         Contract $contract,
         array $services
