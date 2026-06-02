@@ -28,6 +28,11 @@ class ServiceController extends Controller
         }
     }
 
+    public function create($id){
+        $service = Service::with(['layouts', 'layouts.layoutFields'])->where('id', $id);
+        return response()->json($service);
+    }
+    
     public function store(Request $request)
     {
         try {
