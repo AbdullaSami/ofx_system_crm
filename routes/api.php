@@ -25,5 +25,5 @@ Route::apiResource('teams', TeamController::class);
 Route::apiResource('employees', EmployeesController::class);
 Route::apiResource('leads', LeadController::class);
 Route::apiResource('follow-ups', FollowUpController::class);
-Route::apiResource('contracts', ContractController::class);
+Route::apiResource('contracts', ContractController::class)->middleware('auth:sanctum');
 Route::apiResource('clients', ClientController::class);
