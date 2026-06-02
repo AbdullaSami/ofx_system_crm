@@ -48,9 +48,18 @@ class StoreContractRequest extends FormRequest
             'payment_method'        => 'nullable|string|max:50',
 
             // Services
-            'services'              => 'nullable|array',
-            'services.*.id'         => 'required|integer|exists:services,id',
-            'services.*.unit_price' => 'required|numeric|min:0',
+            'services'                         => 'nullable|array',
+            'services.*.id'                    => 'required|integer|exists:services,id',
+            'services.*.unit_price'            => 'required|numeric|min:0',
+
+            // Layout
+            'services.*.layout'                => 'required|array',
+            'services.*.layout.id'             => 'required|integer|exists:layouts,id',
+
+            // Layout Fields Answers
+            'services.*.layout.fields'                         => 'required|array|min:1',
+            'services.*.layout.fields.*.layout_field_id'       => 'required|integer|exists:layout_fields,id',
+            'services.*.layout.fields.*.answer'                => 'nullable|string',
         ];
     }
 }

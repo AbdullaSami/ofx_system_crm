@@ -43,12 +43,51 @@ class ContractService
                     ])->all();
 
                 $contract->services()->sync($syncData);
+
+                                // Store layout answers
+                $this->storeLayoutAnswers(
+                    $contract,
+                    $data['services']
+                );
             }
 
             return $contract;
         });
     }
+  protected function storeLayoutAnswers(
+        Contract $contract,
+        array $services
+    ): void {
+        $answers = [];
 
+        foreach ($services as $service) {
+
+            if (
+                empty($service['layout']) ||
+                empty($service['layout']['fields'])
+            ) {
+                continue;
+            }
+
+            foreach ($service['layout']['fields'] as $field) {
+
+                $answers[] = [
+                    'contract_id'       => $contract->id,
+                    'layout_field_id'   => $field['layout_field_id'],
+                    'answer'            => $field['answer'] ?? null,
+                    'answered_by'       => auth()->id(),
+                    'answered_at'       => now(),
+                    'validation_status' => 'pending',
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ];
+            }
+        }
+
+        if (! empty($answers)) {
+            LayoutAnswer::insert($answers);
+        }
+    }
     private function createClient(array $data): Client
     {
         return Client::create([
