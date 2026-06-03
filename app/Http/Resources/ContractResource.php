@@ -32,7 +32,7 @@ class ContractResource extends JsonResource
                 'unit_price' => $service->pivot->unit_price,
                 'layout'     => $service->pivot->layout_id ? [
                     'id'   => $service->pivot->layout_id,
-                    'name' => $service->pivot->layout?->name,
+                    'name' => $service->pivot->layout?->label,
                     'fields' => $service->pivot->layoutAnswers?->map(fn($answer) => [
                         'layout_field_id' => $answer->layout_field_id,
                         'field_name'      => $answer->layoutField?->name,
