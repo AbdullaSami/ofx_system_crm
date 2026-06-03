@@ -37,7 +37,13 @@ class ContractService
             if (! empty($data['services'])) {
                 $syncData = collect($data['services'])
                     ->mapWithKeys(fn($s) => [
-                        $s['id'] => ['unit_price' => $s['unit_price']]
+                        $s['id'] => [
+                            'unit_price'        => $s['unit_price'],
+                            'quantity'          => $s['quantity']          ?? 1,
+                            'discount'          => $s['discount']          ?? 0,
+                            'billing_frequency' => $s['billing_frequency'] ?? 'monthly',
+                            'status'            => $s['status']            ?? 'active',
+                        ]
                     ])->all();
 
                 $contract->services()->sync($syncData);
@@ -96,7 +102,8 @@ class ContractService
         });
     }
 
-    protected function storeLayoutAnswers(Contract $contract, array $services): void {
+    protected function storeLayoutAnswers(Contract $contract, array $services): void
+    {
         $answers = [];
 
         foreach ($services as $service) {
