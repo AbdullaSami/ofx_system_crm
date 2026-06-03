@@ -85,7 +85,8 @@ class ContractController extends Controller
     public function store(StoreContractRequest $request, ContractService $contractService)
     {
         $contract = $contractService->create($request->validated());
-        return response()->json($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField']))
+        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField'])))
+            ->response()
             ->setStatusCode(201);
     }
 
