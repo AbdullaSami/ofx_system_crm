@@ -31,13 +31,13 @@ class ContractResource extends JsonResource
                 'name'       => $service->name,
                 'unit_price' => $service->pivot->unit_price,
                 'layout'     => $this->layoutAnswers
-                    ->where('service_id', $service->id)
+                    ->filter(fn($answer) => $answer->layoutField?->layout?->service_id === $service->id)
                     ->groupBy('layout_id')
                     ->map(fn($answers, $layoutId) => [
                         'id'     => $layoutId,
                         'fields' => $answers->map(fn($answer) => [
                             'layout_field_id' => $answer->layout_field_id,
-                            'field_name'      => $answer->layoutField?->name,
+                            'field_name'      => $answer->layoutField?->field_name,
                             'answer'          => $answer->answer,
                         ])->values(),
                     ])
