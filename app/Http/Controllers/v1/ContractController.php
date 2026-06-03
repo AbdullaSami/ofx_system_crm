@@ -84,12 +84,6 @@ class ContractController extends Controller
      * Store a newly created resource in storage.
      */
 
-    private function generateContractNumber()
-    {
-        $latest = Contract::latest()->first();
-        $number = $latest ? intval(substr($latest->contract_number, 3)) + 1 : 1;
-        return 'CTR' . str_pad($number, 6, '0', STR_PAD_LEFT);
-    }
     public function store(StoreContractRequest $request, ContractService $contractService)
     {
         $contract = $contractService->create($request->validated());
@@ -106,11 +100,10 @@ class ContractController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Contract $contract)
     {
         try {
-             $contract = Contract::with(['client', 'employee', 'services', 'layoutAnswers'])->findOrFail($id);
-             return new ContractResource($contract);
+             return new ContractResource($contract->load(['client', 'employee', 'services']));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',
@@ -146,10 +139,9 @@ class ContractController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Contract $contract)
     {
         try {
-            $contract = Contract::findOrFail($id);
             $contract->delete();
 
             return response()->json([

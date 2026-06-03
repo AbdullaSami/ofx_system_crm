@@ -100,10 +100,7 @@ class ContractService
         });
     }
 
-    protected function storeLayoutAnswers(
-        Contract $contract,
-        array $services
-    ): void {
+    protected function storeLayoutAnswers(Contract $contract, array $services): void {
         $answers = [];
 
         foreach ($services as $service) {
