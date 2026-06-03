@@ -26,19 +26,23 @@ class ContractResource extends JsonResource
             'client'          => $this->client->client_name ?? null,
             'employee'        => $this->employee->employee_name ?? null,
 
-            'services'        => $this->services->map(fn($service) => [
+            'services' => $this->services->map(fn($service) => [
                 'id'         => $service->id,
                 'name'       => $service->name,
                 'unit_price' => $service->pivot->unit_price,
-                'layout'     => $service->pivot->layout_id ? [
-                    'id'   => $service->pivot->layout_id,
-                    'name' => $service->pivot->layout?->label,
-                    'fields' => $service->pivot->layoutAnswers?->map(fn($answer) => [
-                        'layout_field_id' => $answer->layout_field_id,
-                        'field_name'      => $answer->layoutField?->name,
-                        'answer'          => $answer->answer,
-                    ]),
-                ] : null,
+                'layout'     => $this->layoutAnswers
+                    ->where('service_id', $service->id)
+                    ->groupBy('layout_id')
+                    ->map(fn($answers, $layoutId) => [
+                        'id'     => $layoutId,
+                        'fields' => $answers->map(fn($answer) => [
+                            'layout_field_id' => $answer->layout_field_id,
+                            'field_name'      => $answer->layoutField?->name,
+                            'answer'          => $answer->answer,
+                        ])->values(),
+                    ])
+                    ->values()
+                    ->first(),
             ]),
         ];
     }
