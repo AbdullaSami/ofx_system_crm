@@ -86,7 +86,7 @@ class ContractController extends Controller
     {
         $contract = $contractService->create($request->validated());
 
-        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers.layoutField'])))
+        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField'])))
             ->response()
             ->setStatusCode(201);
     }
