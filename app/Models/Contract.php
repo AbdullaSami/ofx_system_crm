@@ -30,7 +30,10 @@ class Contract extends Model
         'payment_method',
         'renewal_date',
     ];
-
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date'   => 'date',
+    ];
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
