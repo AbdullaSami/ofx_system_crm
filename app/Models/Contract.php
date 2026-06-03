@@ -57,7 +57,8 @@ class Contract extends Model
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class, 'contract_service', 'contract_id', 'service_id')
-            ->withPivot('quantity', 'unit_price', 'discount', 'billing_frequency', 'status');
+            ->withPivot('quantity', 'unit_price', 'discount', 'billing_frequency', 'status')
+            ->withTimestamps();
     }
 
     public function layoutAnswers(): HasMany
