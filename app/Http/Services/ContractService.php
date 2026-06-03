@@ -1,16 +1,12 @@
 <?php
 
-namespace App\Services;
-
-use Illuminate\Support\Facades\Http;
+namespace App\Http\Services;
 
 use App\Models\Contract;
 use App\Models\Client;
-use App\Models\Service;
 use App\Models\LayoutAnswer;
 use Illuminate\Support\Facades\DB;
 
-// app/Services/ContractService.php
 class ContractService
 {
     public function create(array $data): Contract

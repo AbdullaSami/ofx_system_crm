@@ -10,7 +10,7 @@ use App\Http\Resources\ContractResource;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreContractRequest;
 use App\Http\Requests\UpdateContractRequest;
-use App\Services\ContractService;
+use App\Http\Services\ContractService;
 
 class ContractController extends Controller
 {
