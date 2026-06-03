@@ -85,7 +85,7 @@ class ContractController extends Controller
     public function store(StoreContractRequest $request, ContractService $contractService)
     {
         $contract = $contractService->create($request->validated());
-        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField'])))
+        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -100,7 +100,7 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         try {
-             return new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers.layoutField']));
+             return new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',
