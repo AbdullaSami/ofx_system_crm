@@ -42,7 +42,7 @@ class ContractController extends Controller
             $query->when($validated['search'] ?? null, function ($q, $search) {
                 $q->where(function ($inner) use ($search) {
                     $inner->where('contract_number', 'like', "%{$search}%")
-                        ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%{$search}%"));
+                        ->orWhereHas('client', fn($c) => $c->where('client_name', 'like', "%{$search}%"));
                 });
             });
 
