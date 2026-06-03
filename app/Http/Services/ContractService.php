@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
@@ -45,7 +46,7 @@ class ContractService
 
                 $contract->services()->sync($syncData);
 
-                                // Store layout answers
+                // Store layout answers
                 $this->storeLayoutAnswers(
                     $contract,
                     $data['services']
@@ -56,7 +57,7 @@ class ContractService
         });
     }
 
-        public function update(Contract $contract, array $data): Contract
+    public function update(Contract $contract, array $data): Contract
     {
         return DB::transaction(function () use ($contract, $data) {
 
@@ -99,7 +100,7 @@ class ContractService
         });
     }
 
-  protected function storeLayoutAnswers(
+    protected function storeLayoutAnswers(
         Contract $contract,
         array $services
     ): void {

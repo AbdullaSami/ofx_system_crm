@@ -9,7 +9,9 @@ use App\Models\Client;
 use App\Http\Resources\ContractResource;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreContractRequest;
+use App\Http\Requests\UpdateContractRequest;
 use App\Services\ContractService;
+
 class ContractController extends Controller
 {
     /**
@@ -88,48 +90,53 @@ class ContractController extends Controller
         $number = $latest ? intval(substr($latest->contract_number, 3)) + 1 : 1;
         return 'CTR' . str_pad($number, 6, '0', STR_PAD_LEFT);
     }
-public function store(StoreContractRequest $request, ContractService $contractService)
-{
-    $contract = $contractService->create($request->validated());
+    public function store(StoreContractRequest $request, ContractService $contractService)
+    {
+        $contract = $contractService->create($request->validated());
 
-    return (new ContractResource($contract->load(['client', 'employee', 'services'])))
-        ->response()
-        ->setStatusCode(201);
-}
-
-
-/**
- * Display the specified resource.
-*
-* @param  int  $id
-* @return \Illuminate\Http\Response
-*/
-public function show($id)
-{
-    //
+        return (new ContractResource($contract->load(['client', 'employee', 'services'])))
+            ->response()
+            ->setStatusCode(201);
     }
-    
+
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        try {
+             $contract = Contract::with(['client', 'employee', 'services', 'layoutAnswers'])->findOrFail($id);
+             return new ContractResource($contract);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Failed to retrieve contract',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /**
      * Update the specified resource in storage.
-    *
-    * @param  \Illuminate\Http\Request  $request
-    * @param  int  $id
-    * @return \Illuminate\Http\Response
-    */
-    public function update(
-        UpdateContractRequest $request,
-        Contract $contract
-    )
-    {
-        $contract = $this->contractService->update(
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(UpdateContractRequest $request, Contract $contract, ContractService $contractService) {
+
+        $contract = $contractService->update(
             $contract,
             $request->validated()
         );
-    
-        return $this->successResponse(
-            'Contract updated successfully.',
-            $contract
-        );
+
+        return response()->json([
+            'message' => 'Contract updated successfully.',
+            'data'    => new ContractResource($contract)
+        ]);
     }
 
 
@@ -141,6 +148,18 @@ public function show($id)
      */
     public function destroy($id)
     {
-        //
+        try {
+            $contract = Contract::findOrFail($id);
+            $contract->delete();
+
+            return response()->json([
+                'message' => 'Contract deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Failed to delete contract',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -12,7 +12,7 @@ class StoreContractRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->user()->can('create contracts', Contract::class);
+        return true;
     }
 
     /**

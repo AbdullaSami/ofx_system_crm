@@ -23,10 +23,23 @@ class ContractResource extends JsonResource
             'value'           => $this->value,
             'created_at'      => $this->created_at?->toDateTimeString(),
 
-            // Conditionally load relations only if they were eager-loaded
-            // This prevents N+1 if you forget `with()` somewhere
             'client'          => $this->client->client_name ?? null,
             'employee'        => $this->employee->employee_name ?? null,
+
+            'services'        => $this->services->map(fn($service) => [
+                'id'         => $service->id,
+                'name'       => $service->name,
+                'unit_price' => $service->pivot->unit_price,
+                'layout'     => $service->pivot->layout_id ? [
+                    'id'   => $service->pivot->layout_id,
+                    'name' => $service->pivot->layout?->name,
+                    'fields' => $service->pivot->layoutAnswers?->map(fn($answer) => [
+                        'layout_field_id' => $answer->layout_field_id,
+                        'field_name'      => $answer->layoutField?->name,
+                        'answer'          => $answer->answer,
+                    ]),
+                ] : null,
+            ]),
         ];
     }
 }
