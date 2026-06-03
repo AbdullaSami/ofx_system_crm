@@ -86,7 +86,7 @@ class ContractController extends Controller
     {
         $contract = $contractService->create($request->validated());
 
-        return (new ContractResource($contract->load(['client', 'employee', 'services'])))
+        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers.layoutField'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -101,7 +101,7 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         try {
-             return new ContractResource($contract->load(['client', 'employee', 'services']));
+             return new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers.layoutField']));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',
