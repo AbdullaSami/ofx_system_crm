@@ -30,24 +30,20 @@ class ContractResource extends JsonResource
                 'id'         => $service->id,
                 'name'       => $service->name,
                 'unit_price' => $service->pivot->unit_price,
-                'layout' => $this->layoutAnswers
-                    ->filter(
-                        fn($a) =>
-                        $a->layoutField &&
-                            $a->layoutField->layout &&
-                            $a->layoutField->layout->service_id == $service->id
-                    )
-                    ->groupBy(fn($a) => $a->layoutField->layout_id)
-                    ->map(fn($answers, $layoutId) => [
-                        'id'     => $layoutId,
-                        'fields' => $answers->map(fn($answer) => [
+                'layout' => [
+                    'id' => $service->pivot->layout_id,
+                    'fields' => $this->layoutAnswers
+                        ->filter(function ($answer) use ($service) {
+                            return $answer->layoutField &&
+                                $answer->layoutField->layout_id == $service->pivot->layout_id;
+                        })
+                        ->map(fn($answer) => [
                             'layout_field_id' => $answer->layout_field_id,
-                            'field_name'      => $answer->layoutField?->field_name,
+                            'field_name'      => $answer->layoutField->field_name,
                             'answer'          => $answer->answer,
-                        ])->values(),
-                    ])
-                    ->values()
-                    ->first(),
+                        ])
+                        ->values(),
+                ],
             ]),
         ];
     }
