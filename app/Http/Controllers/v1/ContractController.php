@@ -34,7 +34,7 @@ class ContractController extends Controller
             $query    = Contract::query()->with(['client', 'employee']);
 
             // Scope non-admins to their own contracts immediately
-            if (! $user->hasRole('admin')) {
+            if (! $user->hasRole('Admin')) {
                 $query->where('employee_id', $user->employee->id);
             }
 
