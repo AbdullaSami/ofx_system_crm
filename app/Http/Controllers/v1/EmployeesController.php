@@ -194,9 +194,6 @@ class EmployeesController extends Controller
             $employee->user()->delete();
         }
 
-        // Revoke all roles
-        $employee->roles()->detach();
-
         // Detach from all teams
         $employee->teams()->detach();
 
