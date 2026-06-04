@@ -53,7 +53,7 @@ class StoreContractRequest extends FormRequest
             'services.*.unit_price'            => 'required|numeric|min:0',
 
             // Layout
-            'services.*.layout'                => 'required|array',
+            'services.*.layout'                => 'nullable|array',
             'services.*.layout.id'             => 'required|integer|exists:layouts,id',
 
             // Layout Fields Answers
