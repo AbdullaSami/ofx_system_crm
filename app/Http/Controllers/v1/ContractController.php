@@ -125,7 +125,7 @@ class ContractController extends Controller
 
         return response()->json([
             'message' => 'Contract updated successfully.',
-            'data'    => new ContractResource(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout'])
+            'data'    => new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']))
         ]);
     }
 
