@@ -68,7 +68,7 @@ class ContractService
                 'start_date'     => $data['start_date'],
                 'end_date'       => $data['end_date'],
                 'amount'         => $data['amount'],
-                'discount'       => $data['discount'] ?? null,
+                'discount'       => $data['discount'] ?? 0,
                 'notes'          => $data['notes'] ?? null,
                 'status'         => $data['status'],
                 'signed_by'      => $data['signed_by'] ?? null,

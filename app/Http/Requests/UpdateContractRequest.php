@@ -27,13 +27,10 @@ class UpdateContractRequest extends FormRequest
             'employee_id'    => 'required|integer|exists:employees,id',
             'start_date'     => 'required|date',
             'end_date'       => 'required|date|after_or_equal:start_date',
-
             'status'         => 'required|string|in:draft,active,expired,terminated,renewed',
-
             'amount'         => 'required|numeric|min:0',
             'discount'       => 'nullable|numeric|min:0',
             'notes'          => 'nullable|string',
-
             'signed_by'      => 'nullable|integer|exists:users,id',
             'payment_method' => 'nullable|string|max:50',
 
