@@ -54,11 +54,11 @@ class StoreContractRequest extends FormRequest
 
             // Layout
             'services.*.layout'                => 'nullable|array',
-            'services.*.layout.id'             => 'required|integer|exists:layouts,id',
+            'services.*.layout.id'             => 'nullable|integer|exists:layouts,id',
 
             // Layout Fields Answers
-            'services.*.layout.fields'                         => 'required|array|min:1',
-            'services.*.layout.fields.*.layout_field_id'       => 'required|integer|exists:layout_fields,id',
+            'services.*.layout.fields'                         => 'nullable|array|min:1',
+            'services.*.layout.fields.*.layout_field_id'       => 'nullable|integer|exists:layout_fields,id',
             'services.*.layout.fields.*.answer'                => 'nullable|string',
         ];
     }
