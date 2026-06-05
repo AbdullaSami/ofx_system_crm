@@ -17,6 +17,7 @@ class CollectionResource extends JsonResource
         return [
             'id' => $this->id,
             'contract_number' => $this->contract->contract_number,
+            'employee_name' => $this->contract->employee->name,
             'client_name' => $this->client->client_name,
             'amount_due' => $this->amount_due,
             'amount_collected' => $this->amount_collected,

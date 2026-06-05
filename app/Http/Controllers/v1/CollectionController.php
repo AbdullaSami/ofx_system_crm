@@ -10,9 +10,29 @@ use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
 class CollectionController extends Controller
 {
-    public function index(){
+    public function index(Request $request){
         try {
-            $collections = Collection::with(['contract', 'client'])->get();
+
+            $search = $request->query('search');
+            $dateFrom = $request->query('date_from');
+            $dateTo = $request->query('date_to');
+            $employeeId = $request->query('employee_id');
+            $status = $request->query('status');
+
+            $query = Collection::with(['contract', 'client']);
+            if ($search) {
+                $query->where('amount', 'like', "%{$search}%");
+            }
+            if ($dateFrom && $dateTo) {
+                $query->whereBetween('collection_date', [$dateFrom, $dateTo]);
+            }
+            if ($employeeId) {
+                $query->where(fn($q) => $q->whereHas('contract', fn($q) => $q->where('employee_id', $employeeId)));
+            }
+            if ($status) {
+                $query->where('status', $status);
+            }
+            $collections = $query->get();
             return response()->json(new CollectionResource($collections), 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to retrieve collections: ' . $e->getMessage()], 500);
