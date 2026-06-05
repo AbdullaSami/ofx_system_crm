@@ -100,7 +100,7 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         try {
-             return new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
+             return new ContractResource($contract->load(['collections', 'client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',

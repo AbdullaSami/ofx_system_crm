@@ -26,7 +26,7 @@ class ContractResource extends JsonResource
             'client'          => $this->client->client_name ?? null,
             'employee'        => $this->employee->employee_name ?? null,
 
-            
+
             'services' => $this->services->map(fn($service) => [
                 'id'         => $service->id,
                 'name'       => $service->name,
@@ -49,6 +49,8 @@ class ContractResource extends JsonResource
                     })
                     ->values(),
             ]),
+
+            'collections' => CollectionResource::collection($this->collections),
         ];
     }
 }
