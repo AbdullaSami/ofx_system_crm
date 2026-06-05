@@ -11,6 +11,8 @@ use App\Http\Controllers\v1\LeadController;
 use App\Http\Controllers\v1\FollowUpController;
 use App\Http\Controllers\v1\ContractController;
 use App\Http\Controllers\v1\ClientController;
+use App\Http\Controllers\v1\CollectionController;
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -28,3 +30,4 @@ Route::apiResource('follow-ups', FollowUpController::class);
 Route::apiResource('contracts', ContractController::class)->middleware('auth:sanctum');
 Route::get('layout/{id}/create', [ContractController::class, 'create']);
 Route::apiResource('clients', ClientController::class);
+Route::apiResource('collections', CollectionController::class);
