@@ -33,7 +33,7 @@ class CollectionController extends Controller
                 $query->where('status', $status);
             }
             $collections = $query->get();
-            return response()->json(new CollectionResource($collections), 200);
+            return response()->json(CollectionResource::collection($collections), 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to retrieve collections: ' . $e->getMessage()], 500);
         }
@@ -42,7 +42,7 @@ class CollectionController extends Controller
     public function store(StoreCollectionRequest $request){
         try {
             $collection = Collection::create($request->validated());
-            return response()->json(new CollectionResource($collection), 201);
+            return response()->json(CollectionResource::make($collection), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create collection: ' . $e->getMessage()], 500);
         }
@@ -50,7 +50,7 @@ class CollectionController extends Controller
     public function show($id){
         try {
             $collection = Collection::with(['contract', 'client'])->findOrFail($id);
-            return response()->json(new CollectionResource($collection), 200);
+            return response()->json(CollectionResource::make($collection), 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to retrieve collection: ' . $e->getMessage()], 500);
         }
@@ -60,7 +60,7 @@ class CollectionController extends Controller
         try {
             $collection = Collection::findOrFail($id);
             $collection->update($request->validated());
-            return response()->json(new CollectionResource($collection), 200);
+            return response()->json(CollectionResource::make($collection), 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to update collection: ' . $e->getMessage()], 500);
         }
