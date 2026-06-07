@@ -19,7 +19,7 @@ class CollectionController extends Controller
             $employeeId = $request->query('employee_id');
             $status = $request->query('status');
 
-            $query = Collection::with(['contract', 'client']);
+            $query = Collection::with(['contract.employee', 'client']);
             if ($search) {
                 $query->where('amount', 'like', "%{$search}%");
             }
