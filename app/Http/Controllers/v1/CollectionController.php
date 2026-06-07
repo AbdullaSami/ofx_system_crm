@@ -33,7 +33,7 @@ class CollectionController extends Controller
                 $query->where('status', $status);
             }
             $collections = $query->get();
-            return response()->json(new CollectionResource($collections), 200);
+            return response()->json($collections, 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to retrieve collections: ' . $e->getMessage()], 500);
         }
