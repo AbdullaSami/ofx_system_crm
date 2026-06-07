@@ -15,7 +15,7 @@ class CollectionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'               => $this->id,
+            // 'id'               => $this->id,
             'contract_number'  => $this->whenLoaded('contract', fn() => $this->contract->contract_number),
             'employee_name'    => $this->whenLoaded('contract', fn() => $this->contract->employee->name ?? null),
             'client_name'      => $this->whenLoaded('client', fn() => $this->client->client_name),
