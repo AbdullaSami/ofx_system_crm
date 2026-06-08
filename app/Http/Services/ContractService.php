@@ -18,7 +18,11 @@ class ContractService
             $clientId = $data['client_id'] ?? $this->createClient($data)->id;
 
             // Generate number safely inside transaction
+            if(isset($data['contract_number'])) {
+                $contractNumber = $data['contract_number'];
+            } else {    
             $contractNumber = $this->generateContractNumber();
+            }
 
             $contract = Contract::create([
                 'client_id' => $clientId,
