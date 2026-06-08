@@ -36,7 +36,7 @@ class UpdateContractRequest extends FormRequest
 
             // Services
             'services'                         => 'nullable|array',
-            'services.*.id'                    => 'required|integer|exists:services,id',
+            'services.*.slug'                    => 'required|string|exists:services,slug',
             'services.*.unit_price'            => 'required|numeric|min:0',
 
             // Layout
