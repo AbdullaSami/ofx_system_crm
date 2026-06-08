@@ -44,8 +44,8 @@ class CollectionController extends Controller
         try {
             $validedData = $request->validated();
             $collection = Collection::create($validedData->except('services'));
-            if ($request->has('services_slug')) {
-                    $service = Service::where('slug', $validedData['services_slug'])->first();
+            if ($request->has('service_slug')) {
+                    $service = Service::where('slug', $validedData['service_slug'])->first();
                 $collection->services()->sync($service ? [$service->id] : []); // Sync with the new service ID or detach if not found
             }
             return response()->json(CollectionResource::make($collection), 201);
@@ -67,8 +67,8 @@ class CollectionController extends Controller
             $collection = Collection::findOrFail($id);
             $validedData = $request->validated();
             $collection->update($validedData->except('services'));
-            if ($request->has('services_slug')) {
-                    $service = Service::where('slug', $validedData['services_slug'])->first();
+            if ($request->has('service_slug')) {
+                    $service = Service::where('slug', $validedData['service_slug'])->first();
                 $collection->services()->sync($service ? [$service->id] : []); // Sync with the new service ID or detach if not found
             }
             return response()->json(CollectionResource::make($collection), 200);

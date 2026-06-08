@@ -47,7 +47,7 @@ class UpdateCollectionRequest extends FormRequest
             'payment_method' => ['nullable', 'string', 'max:255'],
             'reference_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
-            'services_slug' => ['sometimes', 'string', 'exists:services,slug'],
+            'service_slug' => ['sometimes', 'string', 'exists:services,slug'],
 
         ];
     }

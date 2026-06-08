@@ -46,7 +46,7 @@ return [
             'payment_method' => ['nullable', 'string', 'max:255'],
             'reference_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
-            'services_slug' => ['required', 'string', 'exists:services,slug'],
+            'service_slug' => ['required', 'string', 'exists:services,slug'],
         ];
     }
 
