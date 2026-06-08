@@ -25,6 +25,7 @@ class StoreContractRequest extends FormRequest
         return [
             // Client
             'client_id'             => 'nullable|integer|exists:clients,id',
+            'contract_number'       => 'sometimes|string|max:50|unique:contracts,contract_number',
             'client_name'           => 'required_without:client_id|string|max:255',
             'first_name'            => 'required_without:client_id|string|max:255',
             'last_name'             => 'required_without:client_id|string|max:255',
