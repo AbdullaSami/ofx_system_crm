@@ -46,7 +46,7 @@ class TeamController extends Controller
     public function show($team)
     {
         try {
-            $team = Team::where('slug', $team)->first();
+            $team = Team::with(['employees', 'lead', 'owner', 'services', 'departments'])->where('slug', $team)->first();
             return response()->json($team);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
