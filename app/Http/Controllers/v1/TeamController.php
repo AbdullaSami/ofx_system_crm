@@ -3,15 +3,17 @@
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Team;
 use App\Models\Service;
+use App\Models\Team;
+use Illuminate\Http\Request;
+
 class TeamController extends Controller
 {
     public function index()
     {
         try {
             $teams = Team::with('services')->get();
+
             return response()->json($teams);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
@@ -37,6 +39,7 @@ class TeamController extends Controller
                 }
                 $team->services()->attach($pivotData);
             }
+
             return response()->json($team, 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
@@ -47,18 +50,39 @@ class TeamController extends Controller
     {
         try {
             $team = Team::with(['employees', 'lead', 'owner', 'services', 'departments'])->where('slug', $team)->first();
+
             return response()->json($team);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
     }
 
-    public function update(Request $request, $team)
+    public function update(Request $request, Team $team)
     {
         try {
-            $team = Team::where('slug', $team)->first();
-            $team->update($request->all());
-            return response()->json($team);
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'service_id' => 'sometimes|array',
+                'service_id.*' => 'exists:services,id',
+            ]);
+
+            if (isset($validated['name'])) {
+                $team->update(['name' => $validated['name']]);
+            }
+
+            if (isset($validated['service_id'])) {
+                $services = Service::whereIn('id', $validated['service_id'])->get();
+
+                $pivotData = [];
+                foreach ($services as $service) {
+                    $pivotData[$service->id] = ['department_id' => $service->department_id];
+                }
+
+                $team->services()->sync($pivotData);
+            }
+
+            return response()->json($team->load('services'), 200);
+
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
@@ -69,6 +93,7 @@ class TeamController extends Controller
         try {
             $team = Team::where('slug', $team)->first();
             $team->delete();
+
             return response()->json(null, 204);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
