@@ -42,21 +42,18 @@ class Team extends Model
     public function employees(): BelongsToMany
     {
         return $this->belongsToMany(Employee::class, 'team_employee', 'team_id', 'employee_id')
-            ->withPivot('role', 'assigned_at', 'joined_at', 'left_at')
-            ->withTimestamps();
+            ->withPivot('role', 'assigned_at', 'joined_at', 'left_at');
     }
 
     public function departments(): BelongsToMany
     {
         return $this->belongsToMany(Department::class, 'team_dep_service', 'team_id', 'department_id')
-            ->withPivot('service_id')
-            ->withTimestamps();
+            ->withPivot('service_id');
     }
 
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class, 'team_dep_service', 'team_id', 'service_id')
-            ->withPivot('department_id')
-            ->withTimestamps();
+            ->withPivot('department_id');
     }
 }
