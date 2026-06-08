@@ -32,4 +32,9 @@ class Collection extends Model
     {
         return $this->belongsTo(Client::class, 'client_id');
     }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'service_collection_pivot', 'collection_id', 'service_id');
+    }
 }

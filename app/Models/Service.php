@@ -67,4 +67,10 @@ class Service extends Model
         return $this->belongsToMany(Lead::class, 'lead_service', 'service_id', 'lead_id')
             ->withTimestamps();
     }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class, 'service_collection_pivot', 'service_id', 'collection_id')
+            ->withTimestamps();
+    }
 }

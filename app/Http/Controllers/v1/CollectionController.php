@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CollectionResource;
 use Illuminate\Http\Request;
 use App\Models\Collection;
+use App\Models\Service;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
 class CollectionController extends Controller
@@ -19,7 +20,7 @@ class CollectionController extends Controller
             $employeeId = $request->query('employee_id');
             $status = $request->query('status');
 
-            $query = Collection::with(['contract.employee', 'client']);
+            $query = Collection::with(['contract.employee', 'client', 'services']);
             if ($search) {
                 $query->where('amount', 'like', "%{$search}%");
             }
@@ -41,7 +42,12 @@ class CollectionController extends Controller
 
     public function store(StoreCollectionRequest $request){
         try {
-            $collection = Collection::create($request->validated());
+            $validedData = $request->validated();
+            $collection = Collection::create($validedData->except('services'));
+            if ($request->has('services_slug')) {
+                    $service = Service::where('slug', $validedData['services_slug'])->first();
+                $collection->services()->sync($service ? [$service->id] : []); // Sync with the new service ID or detach if not found
+            }
             return response()->json(CollectionResource::make($collection), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create collection: ' . $e->getMessage()], 500);
@@ -49,7 +55,7 @@ class CollectionController extends Controller
     }
     public function show($id){
         try {
-            $collection = Collection::with(['contract', 'client'])->findOrFail($id);
+            $collection = Collection::with(['contract', 'client', 'services'])->findOrFail($id);
             return response()->json(CollectionResource::make($collection), 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to retrieve collection: ' . $e->getMessage()], 500);
@@ -59,7 +65,12 @@ class CollectionController extends Controller
     public function update(UpdateCollectionRequest $request, $id){
         try {
             $collection = Collection::findOrFail($id);
-            $collection->update($request->validated());
+            $validedData = $request->validated();
+            $collection->update($validedData->except('services'));
+            if ($request->has('services_slug')) {
+                    $service = Service::where('slug', $validedData['services_slug'])->first();
+                $collection->services()->sync($service ? [$service->id] : []); // Sync with the new service ID or detach if not found
+            }
             return response()->json(CollectionResource::make($collection), 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to update collection: ' . $e->getMessage()], 500);
