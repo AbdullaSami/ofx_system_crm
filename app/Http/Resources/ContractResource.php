@@ -31,7 +31,7 @@ class ContractResource extends JsonResource
                 'id'         => $service->id,
                 'name'       => $service->name,
                 'unit_price' => $service->pivot->unit_price,
-                'collectoin_count' => $service->collections->count(),
+                'collections_count' => $service->collections->count(),
                 'collections' => $service->collections->map(fn($collection) => [
                     'id'          => $collection->id,
                     'name'        => $collection->name,
