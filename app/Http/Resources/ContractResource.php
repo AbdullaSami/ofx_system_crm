@@ -31,6 +31,12 @@ class ContractResource extends JsonResource
                 'id'         => $service->id,
                 'name'       => $service->name,
                 'unit_price' => $service->pivot->unit_price,
+                'collectoin_count' => $service->collections->count(),
+                'collections' => $service->collections->map(fn($collection) => [
+                    'id'          => $collection->id,
+                    'name'        => $collection->name,
+                    'description' => $collection->description,
+                ])->values(),
                 'layouts' => $this->layoutAnswers
                     ->filter(fn($answer) => $answer->layoutField)
                     ->groupBy(fn($answer) => $answer->layoutField->layout_id)

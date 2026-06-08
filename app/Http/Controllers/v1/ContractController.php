@@ -29,7 +29,7 @@ class ContractController extends Controller
 
         try {
             $user     = auth()->user();
-            $query    = Contract::query()->with(['client', 'employee', 'services', 'services.collections']);
+            $query    = Contract::query()->with(['client', 'employee',]);
 
             // Scope non-admins to their own contracts immediately
             if (! $user->hasRole('Admin')) {
@@ -100,7 +100,7 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         try {
-             return new ContractResource($contract->load(['collections', 'client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
+             return new ContractResource($contract->load([ 'services', 'services.collections', 'client', 'employee', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',
