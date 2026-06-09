@@ -4,15 +4,18 @@ namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\EmployeeCommission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\EmployeeResource;
 
 class EmployeesController extends Controller
 {
     public function index()
     {
-        $employees = Employee::with(['salaries'])->get();
-        return response()->json($employees);
+        $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
+
+        return response()->json(EmployeeResource::collection($employees));
     }
 
     public function show($id)
@@ -69,9 +72,9 @@ class EmployeesController extends Controller
 
 
             if (isset($validatedData['salary'])) {
-                $employee->salaries()->create([
+                $employee->salary()->create([
                     'amount' => $validatedData['salary'],
-                    'effective_date' => now(),
+                    'currency' => $validatedData['currency'] ?? 'EGP',
                 ]);
             }
 
@@ -149,9 +152,9 @@ class EmployeesController extends Controller
 
             // Add new salary record if provided
             if (isset($validatedData['salary'])) {
-                $employee->salaries()->create([
+                $employee->salary()->create([
                     'amount'         => $validatedData['salary'],
-                    'effective_date' => now(),
+                    'currency'       => $validatedData['currency'] ?? 'EGP',
                 ]);
             }
 
@@ -184,7 +187,6 @@ class EmployeesController extends Controller
         }
     }
 
-
     public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
@@ -198,7 +200,7 @@ class EmployeesController extends Controller
         $employee->teams()->detach();
 
         // Delete salaries
-        $employee->salaries()->delete();
+        $employee->salary()->delete();
 
         // Delete commissions
         $employee->commissions()->delete();
@@ -207,4 +209,62 @@ class EmployeesController extends Controller
 
         return response()->json(['message' => 'Employee deleted successfully'], 200);
     }
+
+    public function paySalary(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'amount' => 'required|numeric',
+            'bonus' => 'nullable|numeric',
+            'deductions' => 'nullable|numeric',
+            'payment_method' => 'nullable|string|max:50',
+            'status' => 'nullable|in:pending,approved,paid',
+        ]);
+
+        $employee->salaries()->create([
+            'amount' => $validatedData['amount'],
+            'currency' => 'EGP',
+            'bonus' => $validatedData['bonus'] ?? 0,
+            'deductions' => $validatedData['deductions'] ?? 0,
+            'payment_method' => $validatedData['payment_method'] ?? null,
+            'effective_date' => now(),
+            'status' => $validatedData['status'] ?? 'paid',
+        ]);
+
+        return response()->json(['message' => 'Salary paid successfully'], 200);
+    }
+
+    public function payCommission(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+        $contractsFrom = $request->input('contracts_from');
+        $contractsTo = $request->input('contracts_to');
+
+        $contractsQuery = $employee->contracts()
+            ->whereBetween('created_at', [$contractsFrom, $contractsTo])
+        ->where('status', 'approved');
+
+        $totalContractsValue = $contractsQuery->sum('amount');
+        $commissionRate = EmployeeCommission::where('employee_id', $employee->id)
+        ->where('amount', '>=', $totalContractsValue)
+        ->latest()
+        ->first()?->commission_rate ?? 0;
+
+        if ($commissionRate <= 0) {
+            return response()->json(['message' => 'No commission rate found for the total contract value'], 400);
+        }
+        $totalCommission = ($totalContractsValue * $commissionRate) / 100;
+
+        $employee->commission()->create([
+            'total_contracts_value' => $totalContractsValue,
+            'commission_rate' => $commissionRate,
+            'total_commission' => $totalCommission,
+            'effective_date' => now(),
+            'status' => 'paid',
+        ]);
+
+        return response()->json(['message' => 'Commission paid successfully'], 200);
+    }
+
 }

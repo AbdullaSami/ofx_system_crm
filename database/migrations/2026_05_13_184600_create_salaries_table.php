@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('bonus', 15, 2)->default(0);
             $table->decimal('deductions', 15, 2)->default(0);
             $table->enum('status', ['pending', 'approved', 'paid'])->default('pending');
-            $table->date('payment_date')->nullable();
+            $table->date('effective_date')->nullable();
             $table->string('payment_method')->nullable();
             $table->softDeletes();
             $table->timestamps();

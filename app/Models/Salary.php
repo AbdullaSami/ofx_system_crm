@@ -19,7 +19,7 @@ class Salary extends Model
         'bonus',
         'deductions',
         'status',
-        'payment_date',
+        'effective_date',
         'payment_method',
     ];
 

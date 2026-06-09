@@ -35,6 +35,11 @@ class Employee extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function salary(): HasMany
+    {
+        return $this->hasMany(EmployeeSalary::class, 'employee_id');
+    }
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
@@ -81,6 +86,10 @@ class Employee extends Model
         return $this->hasMany(Salary::class, 'employee_id');
     }
 
+    public function commission(): HasMany
+    {
+        return $this->hasMany(Commission::class, 'employee_id');
+    }
     public function commissions(): HasMany
     {
         return $this->hasMany(EmployeeCommission::class, 'employee_id');
