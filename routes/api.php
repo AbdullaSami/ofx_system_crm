@@ -25,6 +25,8 @@ Route::apiResource('departments', DepartmentController::class);
 Route::apiResource('services', ServiceController::class);
 Route::apiResource('teams', TeamController::class);
 Route::apiResource('employees', EmployeesController::class);
+Route::post('employees/{id}/salary', [EmployeesController::class, 'paySalary']);
+Route::post('employees/{id}/commission', [EmployeesController::class, 'payCommission']);
 Route::apiResource('leads', LeadController::class);
 Route::apiResource('follow-ups', FollowUpController::class);
 Route::apiResource('contracts', ContractController::class)->middleware('auth:sanctum');
