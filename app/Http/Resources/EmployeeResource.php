@@ -24,11 +24,20 @@ class EmployeeResource extends JsonResource
             'whatsapp' => $this->whatsapp,
             'status' => $this->status,
             'role' => $this->position,
-            'salary' => $this->salary ? [
-                'amount' => $this->salary->amount,
-                'currency' => $this->salary->currency,
-                'effective_date' => $this->salary->effective_date,
-            ] : null,
+            'salary' => $this->salary ? $this->salary->map(function ($salary) {
+                return [
+                    'amount' => $salary->amount,
+                    'currency' => $salary->currency
+                ];
+            }) : null,
+            'salaries' => $this->salaries ? $this->salaries->map(function ($salary) {
+                return [
+                    'amount' => $salary->amount,
+                    'currency' => $salary->currency,
+                    'effective_date' => $salary->effective_date,
+                    'status' => $salary->status,
+                ];
+            }) : null,
             'sales' => $this->contracts ? $this->contracts->map(function ($contract) {
                 return [
                     'id' => $contract->id,
