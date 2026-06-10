@@ -39,7 +39,7 @@ class EmployeeResource extends JsonResource
             }) : null,
             'commission' => $this->commission ? $this->commission->map(function ($commission) {
                 return [
-                    'total_contracts_value' => $commission->amount,
+                    'total_contracts_value' => $commission->total_contracts_value,
                     'commission_rate' => $commission->commission_rate,
                     'total_commission' => $commission->total_commission,
                     'effective_date' => $commission->effective_date,
