@@ -57,6 +57,7 @@ class EmployeesController extends Controller
                 'email' => $validatedData['email'],
                 'whatsapp' => $validatedData['whatsapp'] ?? null,
                 'status' => 'active',
+                'position' => $validatedData['role'] ?? null,
             ]);
 
             if ($validatedData['is_user'] ?? false) {

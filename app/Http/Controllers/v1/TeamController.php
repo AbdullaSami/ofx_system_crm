@@ -25,14 +25,14 @@ class TeamController extends Controller
         try {
             $validate = $request->validate([
                 'name' => 'required|string|max:255',
-                'service_id' => 'required|array',
-                'service_id.*' => 'exists:services,id',
+                'service_slugs' => 'required|array',
+                'service_slugs.*' => 'exists:services,slug',
             ]);
             $team = Team::create([
                 'name' => $validate['name'],
             ]);
-            if ($validate['service_id']) {
-                $services = Service::whereIn('id', $validate['service_id'])->get();
+            if ($validate['service_slugs']) {
+                $services = Service::whereIn('slug', $validate['service_slugs'])->get();
                 $pivotData = [];
                 foreach ($services as $service) {
                     $pivotData[$service->id] = ['department_id' => $service->department_id];
