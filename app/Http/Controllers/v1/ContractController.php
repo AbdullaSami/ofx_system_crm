@@ -183,10 +183,10 @@ class ContractController extends Controller
         }
     }
 
-    public function cancelSingleService(Contract $contract, $serviceId)
+    public function cancelSingleService(Contract $contract, $service_slug)
     {
         try {
-            $service = $contract->services()->where('id', $serviceId)->firstOrFail();
+            $service = $contract->services()->where('slug', $service_slug)->firstOrFail();
             $service->update(['status' => 'cancelled']);
 
             // Handle refund logic for collections associated with the service
