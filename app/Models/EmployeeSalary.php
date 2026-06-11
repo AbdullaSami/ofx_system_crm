@@ -13,6 +13,7 @@ class EmployeeSalary extends Model
         'amount',
         'currency',
     ];
+    public $timestamps = false;
 
     public function employee()
     {
