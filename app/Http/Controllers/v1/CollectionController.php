@@ -80,6 +80,7 @@ class CollectionController extends Controller
     public function destroy($id){
         try {
             $collection = Collection::findOrFail($id);
+            $collection->update(['status' => 'written_off']);
             $collection->delete();
             return response()->json(['message' => 'Collection deleted successfully'], 200);
         } catch (\Exception $e) {
