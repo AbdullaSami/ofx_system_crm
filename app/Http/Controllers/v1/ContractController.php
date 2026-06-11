@@ -151,4 +151,60 @@ class ContractController extends Controller
             ], 500);
         }
     }
+
+    /*
+    * Cancel services associated with a contract
+    * manage refund logic if there collections associated with the contract services and set the rest to terminated
+    */
+
+    public function cancelContract(Contract $contract)
+    {
+        try {
+            $contract->services()->update(['status' => 'cancelled']);
+
+            // Handle refund logic for collections associated with the contract's services
+            foreach ($contract->services as $service) {
+                foreach ($service->collections as $collection) {
+                    if ($collection->status === 'pending' || $collection->status === 'partial') {
+                        // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
+                        $collection->update(['status' => 'written_off']);
+                    }
+                }
+            }
+
+            return response()->json([
+                'message' => 'Contract services cancelled successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Failed to cancel contract services',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function cancelSingleService(Contract $contract, $serviceId)
+    {
+        try {
+            $service = $contract->services()->where('id', $serviceId)->firstOrFail();
+            $service->update(['status' => 'cancelled']);
+
+            // Handle refund logic for collections associated with the service
+            foreach ($service->collections as $collection) {
+                if ($collection->status === 'pending' || $collection->status === 'partial') {
+                    // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
+                    $collection->update(['status' => 'written_off']);
+                }
+            }
+
+            return response()->json([
+                'message' => 'Service cancelled successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Failed to cancel service',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

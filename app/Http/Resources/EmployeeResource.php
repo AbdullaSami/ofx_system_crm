@@ -69,7 +69,6 @@ class EmployeeResource extends JsonResource
             }) : null,
              'is_user' => $this->user_id ? $this->user : false,
              'created_at' => $this->created_at,
-             'updated_at' => $this->updated_at,
         ];
     }
 }
