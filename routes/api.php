@@ -12,6 +12,8 @@ use App\Http\Controllers\v1\FollowUpController;
 use App\Http\Controllers\v1\ContractController;
 use App\Http\Controllers\v1\ClientController;
 use App\Http\Controllers\v1\CollectionController;
+use App\Http\Controllers\v1\TreasuryController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -35,3 +37,4 @@ Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractContr
 Route::get('layout/{id}/create', [ContractController::class, 'create']);
 Route::apiResource('clients', ClientController::class);
 Route::apiResource('collections', CollectionController::class);
+Route::apiResource('treasury', TreasuryController::class);
