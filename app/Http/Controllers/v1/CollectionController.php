@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CollectionResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use App\Models\Collection;
 use App\Models\Service;
 use App\Http\Requests\StoreCollectionRequest;
@@ -43,8 +44,9 @@ class CollectionController extends Controller
     public function store(StoreCollectionRequest $request){
         try {
             $validedData = $request->validated();
-            $collection = Collection::create($validedData->except('services'));
-            if ($request->has('service_slug')) {
+$collection = Collection::create(
+    Arr::except($validatedData, ['services'])
+);            if ($request->has('service_slug')) {
                     $service = Service::where('slug', $validedData['service_slug'])->first();
                 $collection->services()->attach($service->id); // Sync with the new service ID or detach if not found
             }
