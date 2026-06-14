@@ -24,12 +24,14 @@ class ContractResource extends JsonResource
             'created_at'      => $this->created_at?->toDateTimeString(),
 
             'client'          => $this->client->client_name ?? null,
+            'client_id'          => $this->client->id ?? null,
             'employee'        => $this->employee->employee_name ?? null,
 
 
             'services' => $this->services->map(fn($service) => [
                 'id'         => $service->id,
                 'name'       => $service->name,
+                'slug'       => $service->slug,
                 'unit_price' => $service->pivot->unit_price,
                 'collections_count' => $service->collections->count(),
                 'collections' => $service->collections->map(fn($collection) => [
