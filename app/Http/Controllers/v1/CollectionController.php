@@ -43,7 +43,7 @@ class CollectionController extends Controller
 
     public function store(StoreCollectionRequest $request){
         try {
-            $validedData = $request->validated();
+            $validatedData = $request->validated();
 $collection = Collection::create(
     Arr::except($validatedData, ['services'])
 );            if ($request->has('service_slug')) {
