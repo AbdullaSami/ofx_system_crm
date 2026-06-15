@@ -8,6 +8,7 @@ class Commission extends Model
 {
     protected $fillable = [
         'employee_id',
+        'contract_id',
         'total_contracts_value',
         'commission_rate',
         'total_commission',
@@ -17,6 +18,10 @@ class Commission extends Model
 
     public function employee()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
+    public function contract(){
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 }

@@ -34,6 +34,10 @@ class Contract extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
     ];
+
+    public function commission(){
+        return $this->belongsTo(Commission::class);
+    }
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');

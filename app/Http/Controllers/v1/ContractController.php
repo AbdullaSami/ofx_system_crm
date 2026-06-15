@@ -9,6 +9,7 @@ use App\Http\Resources\ContractResource;
 use App\Http\Requests\StoreContractRequest;
 use App\Http\Requests\UpdateContractRequest;
 use App\Http\Services\ContractService;
+use App\Http\Services\CommissionService;
 
 class ContractController extends Controller
 {
@@ -85,6 +86,8 @@ class ContractController extends Controller
     public function store(StoreContractRequest $request, ContractService $contractService)
     {
         $contract = $contractService->create($request->validated());
+        $commission = new CommissionService;
+        $commission->addCommission($contract->id, $contract->amount, $contract->employee_id);
         return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout'])))
             ->response()
             ->setStatusCode(201);
@@ -100,7 +103,7 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         try {
-             return new ContractResource($contract->load([ 'services', 'services.collections', 'client', 'employee', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
+            return new ContractResource($contract->load(['services', 'services.collections', 'client', 'employee', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',
@@ -116,13 +119,16 @@ class ContractController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateContractRequest $request, Contract $contract, ContractService $contractService) {
+    public function update(UpdateContractRequest $request, Contract $contract, ContractService $contractService)
+    {
 
         $contract = $contractService->update(
             $contract,
             $request->validated()
         );
 
+        $commission = new CommissionService;
+        $commission->updateCommission($contract->id, $contract->amount, $contract->employee_id);
         return response()->json([
             'message' => 'Contract updated successfully.',
             'data'    => new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']))
