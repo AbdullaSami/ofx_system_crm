@@ -47,28 +47,38 @@ class EmployeeResource extends JsonResource
                 ];
             }) : null,
             'commission' => $this->commission ? $this->commission->map(function ($commission) {
+                // Find the matching commission rate based on total_contracts_value
+                $matchedCommission = $this->commissions
+                    ?->filter(fn($c) => $commission->total_contracts_value >= $c->amount)
+                    ->sortByDesc('amount')
+                    ->first();
+
+                $commissionRate = $matchedCommission?->commission_rate ?? $commission->commission_rate;
+
                 return [
                     'total_contracts_value' => $commission->total_contracts_value,
-                    'commission_rate' => $commission->commission_rate,
+                    'commission_rate' => $commissionRate,
                     'total_commission' => $commission->total_commission,
+                    'total_commission_value' => $commission->total_contracts_value * ($commissionRate / 100),
                     'effective_date' => $commission->effective_date,
                     'status' => $commission->status,
                 ];
             }) : null,
+
             'commissions' => $this->commissions ? $this->commissions->map(function ($commission) {
                 return [
                     'amount' => $commission->amount,
                     'commission_rate' => $commission->commission_rate,
                 ];
             }) : null,
-             'team' => $this->teams ? $this->teams->map(function ($team) {
+            'team' => $this->teams ? $this->teams->map(function ($team) {
                 return [
                     'id' => $team->id,
                     'name' => $team->name,
                 ];
             }) : null,
-             'is_user' => $this->user_id ? $this->user : false,
-             'created_at' => $this->created_at,
+            'is_user' => $this->user_id ? $this->user : false,
+            'created_at' => $this->created_at,
         ];
     }
 }
