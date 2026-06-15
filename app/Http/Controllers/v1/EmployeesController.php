@@ -20,7 +20,7 @@ class EmployeesController extends Controller
 
     public function show($id)
     {
-        $employee = Employee::with(['salaries'])->findOrFail($id);
+        $employee = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->findOrFail($id);
         if (!$employee) {
             return response()->json(['message' => 'Employee not found'], 404);
         }
