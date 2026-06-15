@@ -10,9 +10,11 @@ use App\Models\Collection;
 use App\Models\Service;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
+
 class CollectionController extends Controller
 {
-    public function index(Request $request){
+    public function index(Request $request)
+    {
         try {
 
             $search = $request->query('search');
@@ -41,13 +43,15 @@ class CollectionController extends Controller
         }
     }
 
-    public function store(StoreCollectionRequest $request){
+    public function store(StoreCollectionRequest $request)
+    {
         try {
             $validatedData = $request->validated();
-$collection = Collection::create(
-    Arr::except($validatedData, ['services'])
-);            if ($request->has('service_slug')) {
-                    $service = Service::where('slug', $validatedData['service_slug'])->first();
+            $collection = Collection::create(
+                Arr::except($validatedData, ['services'])
+            );
+            if ($request->has('service_slug')) {
+                $service = Service::where('slug', $validatedData['service_slug'])->first();
                 $collection->services()->attach($service->id); // Sync with the new service ID or detach if not found
             }
             return response()->json(CollectionResource::make($collection), 201);
@@ -55,7 +59,8 @@ $collection = Collection::create(
             return response()->json(['error' => 'Failed to create collection: ' . $e->getMessage()], 500);
         }
     }
-    public function show($id){
+    public function show($id)
+    {
         try {
             $collection = Collection::with(['contract', 'client', 'services'])->findOrFail($id);
             return response()->json(CollectionResource::make($collection), 200);
@@ -64,13 +69,16 @@ $collection = Collection::create(
         }
     }
 
-    public function update(UpdateCollectionRequest $request, $id){
+    public function update(UpdateCollectionRequest $request, $id)
+    {
         try {
             $collection = Collection::findOrFail($id);
-            $validedData = $request->validated();
-            $collection->update($validedData->except('services'));
+            $validatedData = $request->validated();
+            $collection->update(
+                Arr::except($validatedData, ['services'])
+            );
             if ($request->has('service_slug')) {
-                    $service = Service::where('slug', $validedData['service_slug'])->first();
+                $service = Service::where('slug', $validatedData['service_slug'])->first();
                 $collection->services()->sync($service->id); // Sync with the new service ID or detach if not found
             }
             return response()->json(CollectionResource::make($collection), 200);
@@ -79,7 +87,8 @@ $collection = Collection::create(
         }
     }
 
-    public function destroy($id){
+    public function destroy($id)
+    {
         try {
             $collection = Collection::findOrFail($id);
             $collection->update(['status' => 'written_off']);
