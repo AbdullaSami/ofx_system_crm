@@ -52,7 +52,7 @@ class CollectionController extends Controller
             );
             if ($request->has('service_slug')) {
                 $service = Service::where('slug', $validatedData['service_slug'])->first();
-                $collection->services()->attach($service->id); // Sync with the new service ID or detach if not found
+                $collection->services()->attach($service); // Sync with the new service ID or detach if not found
             }
             return response()->json(CollectionResource::make($collection), 201);
         } catch (\Exception $e) {
