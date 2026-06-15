@@ -47,23 +47,27 @@ class EmployeeResource extends JsonResource
                 ];
             }) : null,
             'commission' => $this->commission ? $this->commission->map(function ($commission) {
-                // Find the matching commission rate based on total_contracts_value
-                $matchedCommission = $this->commissions
-                    ?->filter(fn($c) => $commission->total_contracts_value >= $c->amount)
-                    ->sortByDesc('amount')
-                    ->first();
-
-                $commissionRate = $matchedCommission?->commission_rate ?? $commission->commission_rate;
-
                 return [
                     'total_contracts_value' => $commission->total_contracts_value,
-                    'commission_rate' => $commissionRate,
+                    'commission_rate' => $commission->commission_rate,
                     'total_commission' => $commission->total_commission,
-                    'total_commission_value' => $commission->total_contracts_value * ($commissionRate / 100),
                     'effective_date' => $commission->effective_date,
                     'status' => $commission->status,
                 ];
             }) : null,
+
+            'total_commission_value' => (function () {
+                $totalSum = $this->commission?->sum('total_contracts_value') ?? 0;
+
+                $matchedCommission = $this->commissions
+                    ?->filter(fn($c) => $totalSum >= $c->amount)
+                    ->sortByDesc('amount')
+                    ->first();
+
+                $commissionRate = $matchedCommission?->commission_rate ?? 0;
+
+                return $totalSum * ($commissionRate / 100);
+            })(),
 
             'commissions' => $this->commissions ? $this->commissions->map(function ($commission) {
                 return [
