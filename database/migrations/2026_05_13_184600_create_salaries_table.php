@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 15, 2);
-            $table->date('effective_date');
             $table->index(['employee_id', 'effective_date']);
             $table->index('effective_date');
             $table->string('currency', 3)->default('USD');
