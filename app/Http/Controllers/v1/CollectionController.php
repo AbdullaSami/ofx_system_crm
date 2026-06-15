@@ -47,7 +47,7 @@ class CollectionController extends Controller
 $collection = Collection::create(
     Arr::except($validatedData, ['services'])
 );            if ($request->has('service_slug')) {
-                    $service = Service::where('slug', $validedData['service_slug'])->first();
+                    $service = Service::where('slug', $validatedData['service_slug'])->first();
                 $collection->services()->attach($service->id); // Sync with the new service ID or detach if not found
             }
             return response()->json(CollectionResource::make($collection), 201);
