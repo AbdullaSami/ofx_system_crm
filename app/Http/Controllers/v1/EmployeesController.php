@@ -24,7 +24,7 @@ class EmployeesController extends Controller
         if (!$employee) {
             return response()->json(['message' => 'Employee not found'], 404);
         }
-        return response()->json($employee);
+        return response()->json(EmployeeResource::collection($employees));
     }
 
     public function store(Request $request)
