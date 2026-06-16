@@ -208,7 +208,7 @@ class ServiceController extends Controller
 
                     foreach ($layoutData['fields'] as $field) {
 
-                        $layout->fields()->create([
+                        $layout->layoutFields()->create([
                             'field_name' => $field['field_name'],
                             'field_type' => $field['field_type'],
                             'is_required' => $field['is_required'] ?? false,
