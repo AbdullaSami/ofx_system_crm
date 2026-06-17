@@ -16,7 +16,7 @@ class ServiceController extends Controller
 
 
             return response()->json(
-                $services->map(function($service) {
+                $services->map(function ($service) {
                     $arr = $service->toArray();
                     unset($arr['department_id'], $arr['id'], $arr['department']);
                     $arr['department_name'] = $service->department->name ?? null;
@@ -28,11 +28,12 @@ class ServiceController extends Controller
         }
     }
 
-    public function create($id){
+    public function create($id)
+    {
         $service = Service::with(['layouts', 'layouts.layoutFields'])->where('id', $id);
         return response()->json($service);
     }
-    
+
     public function store(Request $request)
     {
         try {
@@ -252,5 +253,26 @@ class ServiceController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Take array of id's and return layouts
+     * @param Request $request
+     * @return void
+     */
+    public function getServicesLayouts(Request $request)
+    {
+        $request->validate([
+            'services_slugs'   => 'required|array',
+            'services_slugs.*' => 'string',
+        ]);
+
+        $services = Service::with('layouts.layoutFields')
+            ->whereIn('slug', $request->services_slugs)
+            ->get();
+
+        return response()->json([
+            'data' => $services,
+        ]);
     }
 }

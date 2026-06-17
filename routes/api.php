@@ -25,6 +25,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 
 Route::apiResource('departments', DepartmentController::class);
 Route::apiResource('services', ServiceController::class);
+Route::post('service/layouts', [ServiceController::class, 'getServicesLayouts']);
 Route::apiResource('teams', TeamController::class);
 Route::apiResource('employees', EmployeesController::class);
 Route::post('employees/{id}/salary', [EmployeesController::class, 'paySalary']);
