@@ -35,7 +35,7 @@ Route::apiResource('follow-ups', FollowUpController::class);
 Route::apiResource('contracts', ContractController::class)->middleware('auth:sanctum');
 Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancelContract'])->middleware('auth:sanctum');
 Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractController::class, 'cancelSingleService'])->middleware('auth:sanctum');
-Route::get('layout/{id}/create', [ContractController::class, 'create']);
+// Route::get('layout/{id}/create', [ContractController::class, 'create']);
 Route::apiResource('clients', ClientController::class);
 Route::apiResource('collections', CollectionController::class);
 Route::apiResource('treasury', TreasuryController::class);

@@ -166,14 +166,27 @@ class ContractController extends Controller
     public function cancelContract(Contract $contract)
     {
         try {
-            $contract->services()->update(['status' => 'cancelled']);
+            $contract->update([
+                'status' => 'terminated',
+                'is_terminated' => false,
+                'terminated_date' => now()
+            ]);
+            $contract->services()->update([
+                'status' => 'cancelled',
+                'is_cancelled' => true,
+                'cancelled_date' => now()
+                ]);
 
             // Handle refund logic for collections associated with the contract's services
             foreach ($contract->services as $service) {
                 foreach ($service->collections as $collection) {
                     if ($collection->status === 'pending' || $collection->status === 'partial') {
                         // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
-                        $collection->update(['status' => 'written_off']);
+                        $collection->update([
+                            'status' => 'written_off',
+                            'is_written_off' => true,
+                            'written_off_date' => now()
+                            ]);
                     }
                 }
             }

@@ -22,6 +22,8 @@ class Contract extends Model
         'notes',
         'discount',
         'status',
+        'is_terminated',
+        'terminated_date',
         'signed_by',
         'document_path',
         'billing_cycle',
@@ -33,6 +35,8 @@ class Contract extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date'   => 'date',
+        'terminated_date'   => 'date',
+
     ];
 
     public function commission(){

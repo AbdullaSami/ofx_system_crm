@@ -18,6 +18,8 @@ class Collection extends Model
         'due_date',
         'collection_date',
         'status',
+        'is_written_off',
+        'written_off_date',
         'payment_method',
         'reference_number',
         'notes',

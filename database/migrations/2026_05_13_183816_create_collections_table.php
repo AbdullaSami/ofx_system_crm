@@ -20,6 +20,8 @@ return new class extends Migration
             $table->date('due_date');
             $table->date('collection_date')->nullable();
             $table->enum('status', ['pending', 'partial', 'paid', 'overdue', 'written_off'])->default('pending');
+            $table->boolean('is_written_off')->nullable();
+            $table->date('written_off_date')->nullable();
             $table->string('payment_method')->nullable();
             $table->string('reference_number')->nullable();
             $table->text('notes')->nullable();

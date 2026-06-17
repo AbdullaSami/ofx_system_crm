@@ -21,6 +21,8 @@ return new class extends Migration
             $table->decimal('discount', 5, 2)->default(0);
             $table->string('billing_frequency')->nullable();
             $table->enum('status', ['active', 'paused', 'cancelled'])->default('active');
+            $table->boolean('is_cancelled')->nullable();
+            $table->date('cancelled_date')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

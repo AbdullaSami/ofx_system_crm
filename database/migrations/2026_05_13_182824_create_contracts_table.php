@@ -22,6 +22,8 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->decimal('discount', 5, 2)->default(0);
             $table->enum('status', ['draft', 'active', 'expired', 'terminated', 'renewed'])->default('draft');
+            $table->boolean('is_terminated')->nullable();
+            $table->date('terminated_date')->nullable();
             $table->index('status');
             $table->index(['start_date', 'end_date']);
             $table->index(['client_id', 'status']);
