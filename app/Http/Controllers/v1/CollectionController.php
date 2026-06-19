@@ -50,6 +50,17 @@ class CollectionController extends Controller
     {
         try {
             $validatedData = $request->validated();
+
+            if (Collection::exceedsContractAmount(
+                $validatedData['contract_id'],
+                $validatedData['amount_due'],
+                'amount_due'
+            )) {
+                return response()->json([
+                    'message' => 'Total amount due exceeds the contract amount.'
+                ], 422);
+            }
+
             $collection = Collection::create(
                 Arr::except($validatedData, ['services'])
             );
@@ -82,6 +93,20 @@ class CollectionController extends Controller
             $oldCollected = $collection->amount_collected;
 
             $data = Arr::except($request->validated(), ['service_slug']);
+
+            if (Collection::exceedsContractAmount(
+                $data['contract_id'],
+                $data['amount_collected'],
+                'amount_collected'
+            )) {
+                return response()->json([
+                    'message' => 'Total collected amount exceeds the contract amount.'
+                ], 422);
+            }
+
+            if ($data['amount_collected'] > $collection->amount_due) {
+                return response()->json('error: the collected amount cant be more the amount due collection');
+            }
 
             if (($data['status'] ?? $collection->status) === 'paid') {
                 $data['amount_collected'] = $collection->amount_due;

@@ -39,4 +39,24 @@ class Collection extends Model
     {
         return $this->belongsToMany(Service::class, 'service_collection_pivot', 'collection_id', 'service_id');
     }
+
+    public static function exceedsContractAmount(
+        int $contractId,
+        float $amount,
+        string $column = 'amount_due',
+        ?int $ignoreCollectionId = null
+    ): bool {
+        $query = self::where('contract_id', $contractId);
+
+        // Ignore current collection when updating
+        if ($ignoreCollectionId) {
+            $query->where('id', '!=', $ignoreCollectionId);
+        }
+
+        $total = $query->sum($column);
+
+        $contract = Contract::findOrFail($contractId);
+
+        return ($total + $amount) > $contract->amount;
+    }
 }
