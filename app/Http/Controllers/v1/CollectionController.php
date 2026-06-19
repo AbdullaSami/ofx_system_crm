@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CollectionResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use App\Models\Collection;
 use App\Models\Service;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
+use App\Http\Services\TreasuryAccountingService;
+use App\Models\TreasuryAccount;
 
 class CollectionController extends Controller
 {
@@ -71,19 +74,73 @@ class CollectionController extends Controller
 
     public function update(UpdateCollectionRequest $request, $id)
     {
+        DB::beginTransaction();
+
         try {
-            $collection = Collection::findOrFail($id);
-            $validatedData = $request->validated();
-            $collection->update(
-                Arr::except($validatedData, ['services'])
-            );
-            if ($request->has('service_slug')) {
-                $service = Service::where('slug', $validatedData['service_slug'])->first();
-                $collection->services()->sync($service); // Sync with the new service ID or detach if not found
+            $collection = Collection::with('contract')->findOrFail($id);
+
+            $oldCollected = $collection->amount_collected;
+
+            $data = Arr::except($request->validated(), ['service_slug']);
+
+            if (($data['status'] ?? $collection->status) === 'paid') {
+                $data['amount_collected'] = $collection->amount_due;
+                $data['collection_date'] = now();
             }
-            return response()->json(CollectionResource::make($collection), 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to update collection: ' . $e->getMessage()], 500);
+
+            $collection->update($data);
+
+            if (!empty($request->service_slug)) {
+
+                $service = Service::where(
+                    'slug',
+                    $request->service_slug
+                )->firstOrFail();
+
+                $collection->services()->sync([$service->id]);
+            }
+
+            $collection->refresh();
+
+            $difference = $collection->amount_collected - $oldCollected;
+
+            if ($difference != 0) {
+
+                $collection->contract()->increment(
+                    'amount_paid',
+                    $difference
+                );
+
+                $account = TreasuryAccount::where(
+                    'account_name',
+                    $collection->payment_method
+                )->firstOrFail();
+
+                $type = $difference > 0 ? 'debit' : 'credit';
+
+                (new TreasuryAccountingService())->recordTransaction(
+                    $account->id,
+                    abs($difference),
+                    $type,
+                    'Collection update for contract #' .
+                        $collection->contract->contract_number
+                );
+            }
+
+            DB::commit();
+
+            return response()->json(
+                CollectionResource::make($collection->fresh()),
+                200
+            );
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'error' => 'Failed to update collection.',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 

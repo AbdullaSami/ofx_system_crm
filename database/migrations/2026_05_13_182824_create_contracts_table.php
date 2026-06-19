@@ -19,11 +19,15 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->decimal('amount', 15, 2);
+            $table->decimal('amount_paid', 15, 2)->default(0);
             $table->text('notes')->nullable();
             $table->decimal('discount', 5, 2)->default(0);
             $table->enum('status', ['draft', 'active', 'expired', 'terminated', 'renewed'])->default('draft');
             $table->boolean('is_terminated')->nullable();
             $table->date('terminated_date')->nullable();
+            $table->boolean('is_refund')->nullable();
+            $table->date('refund_date')->nullable();
+            $table->decimal('refund_amount', 15, 2)->nullable();
             $table->index('status');
             $table->index(['start_date', 'end_date']);
             $table->index(['client_id', 'status']);

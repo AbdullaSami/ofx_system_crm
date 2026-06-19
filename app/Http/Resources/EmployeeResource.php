@@ -36,6 +36,9 @@ class EmployeeResource extends JsonResource
                     'currency' => $salary->currency,
                     'effective_date' => $salary->effective_date,
                     'status' => $salary->status,
+                    'is_refund' => $salary->is_refund ?? null,
+                    'refund_date' => $salary->refund_date ?? null,
+                    'refund_amount' => $salary->refund_amount ?? null,
                 ];
             }) : null,
             'sales' => $this->contracts ? $this->contracts->map(function ($contract) {
@@ -57,16 +60,33 @@ class EmployeeResource extends JsonResource
             }) : null,
 
             'total_commission_value' => (function () {
-                $totalSum = $this->commission?->sum('total_contracts_value') ?? 0;
+                // Step 1: Calculate effective sales value from contracts
+                $effectiveSalesValue = $this->contracts
+                    ? $this->contracts->sum(function ($contract) {
+                        if ($contract->is_terminated) {
+                            // Terminated: use amount_paid minus refund (if any)
+                            $paid = $contract->amount_paid ?? 0;
+                            $refund = ($contract->is_refund && $contract->refund_amount)
+                                ? $contract->refund_amount
+                                : 0;
+                            return $paid - $refund;
+                        }
 
+                        // Not terminated: use full contract amount
+                        return $contract->amount ?? 0;
+                    })
+                    : 0;
+
+                // Step 2: Find the matching commission tier based on effective value
                 $matchedCommission = $this->commissions
-                    ?->filter(fn($c) => $totalSum >= $c->amount)
+                    ?->filter(fn($c) => $effectiveSalesValue >= $c->amount)
                     ->sortByDesc('amount')
                     ->first();
 
                 $commissionRate = $matchedCommission?->commission_rate ?? 0;
 
-                return $totalSum * ($commissionRate / 100);
+                // Step 3: Apply rate to effective sales value
+                return $effectiveSalesValue * ($commissionRate / 100);
             })(),
 
             'commissions' => $this->commissions ? $this->commissions->map(function ($commission) {
