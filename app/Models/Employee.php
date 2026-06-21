@@ -83,7 +83,7 @@ class Employee extends Model
     
     public function salaries(): HasMany
     {
-        return $this->hasMany(Salary::class, 'employee_id');
+        return $this->hasMany(Salary::class);
     }
 
     public function commission(): HasMany
