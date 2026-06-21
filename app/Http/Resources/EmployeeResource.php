@@ -89,7 +89,7 @@ class EmployeeResource extends JsonResource
                 return $effectiveSalesValue * ($commissionRate / 100);
             })(),
 
-            'commissions' => $this->commissions ? $this->commissions->map(function ($commission) {
+            'targets' => $this->commissions ? $this->commissions->map(function ($commission) {
                 return [
                     'amount' => $commission->amount,
                     'commission_rate' => $commission->commission_rate,
