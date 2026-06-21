@@ -228,7 +228,7 @@ class ServiceController extends Controller
 
             return response()->json([
                 'message' => 'Service updated successfully',
-                'data' => $service->load('layouts.fields')
+                'data' => $service->load('layouts.layoutFields')
             ]);
         } catch (\Throwable $e) {
 
