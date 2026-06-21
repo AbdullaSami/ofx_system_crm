@@ -114,13 +114,7 @@ class ServiceController extends Controller
 
         try {
 
-            $service = Service::where('slug', $service)->first();
-
-            if (!$service) {
-                return response()->json([
-                    'message' => 'Service not found'
-                ], 404);
-            }
+            $services = Service::where('slug', $service)->firstOrFail();
 
             $validated = $request->validate([
                 'name' => 'nullable|string|max:255',
@@ -129,7 +123,6 @@ class ServiceController extends Controller
 
                 // Layout
                 'layout' => 'nullable|array',
-
                 'layout.label' => 'nullable|string|max:255',
                 'layout.is_active' => 'nullable|boolean',
                 'layout.is_default' => 'nullable|boolean',
@@ -151,59 +144,63 @@ class ServiceController extends Controller
             ]);
 
             /*
-        |--------------------------------------------------------------------------
-        | Update service basic info
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | Update Service
+            |--------------------------------------------------------------------------
+            */
 
-            $service->update(
+            $services->update(
                 collect($validated)
                     ->except('layout')
                     ->toArray()
             );
 
             /*
-        |--------------------------------------------------------------------------
-        | Create new layout version
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | Create New Layout Version
+            |--------------------------------------------------------------------------
+            */
 
-            if (isset($validated['layout'])) {
+            if (!empty($validated['layout'])) {
 
                 $layoutData = $validated['layout'];
 
-                // Disable old default layouts if new one is default
+                // If this layout will be the default, remove default from others
                 if (($layoutData['is_default'] ?? false) === true) {
+                    $services->layouts()->update([
+                        'is_default' => false,
+                    ]);
+                }
 
-                    $service->layouts()->update([
-                        'is_default' => false
+                // If this layout will be active, deactivate previous layouts
+                if (($layoutData['is_active'] ?? true) === true) {
+                    $services->layouts()->update([
+                        'is_active' => false,
                     ]);
                 }
 
                 // Get latest version
-                $latestLayout = $service->layouts()
-                    ->latest('id')
-                    ->first();
+                $latestVersion = $services->layouts()->max('version');
 
-                $newVersion = $latestLayout
-                    ? ((float) $latestLayout->version + 1)
+                $newVersion = $latestVersion
+                    ? ((float) $latestVersion + 1)
                     : 1.0;
 
-                // Create new layout version
-                $layout = $service->layouts()->create([
-                    'label' => $layoutData['label'] ?? $service->name,
+                // Create new version
+                $layout = $services->layouts()->create([
+                    'label' => $layoutData['label'] ?? $services->name,
                     'is_active' => $layoutData['is_active'] ?? true,
                     'is_default' => $layoutData['is_default'] ?? false,
-                    'version' => (string) $newVersion,
+                    'version' => $newVersion,
                     'description' => $layoutData['description'] ?? null,
                     'sort_order' => $layoutData['sort_order'] ?? 0,
                 ]);
 
                 /*
-            |--------------------------------------------------------------------------
-            | Create layout fields
-            |--------------------------------------------------------------------------
-            */
+                |--------------------------------------------------------------------------
+                | Create Layout Fields
+                |--------------------------------------------------------------------------
+                */
 
                 if (!empty($layoutData['fields'])) {
 
@@ -228,15 +225,27 @@ class ServiceController extends Controller
 
             return response()->json([
                 'message' => 'Service updated successfully',
-                'data' => $service->load('layouts.layoutFields')
+                'data' => $services->fresh()->load([
+                    'layouts' => fn($q) => $q->orderByDesc('version'),
+                    'layouts.layoutFields',
+                ]),
             ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Service not found',
+            ], 404);
+
         } catch (\Throwable $e) {
 
             DB::rollBack();
 
             return response()->json([
                 'message' => 'An error occurred',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -263,7 +272,7 @@ class ServiceController extends Controller
     public function getServicesLayouts(Request $request)
     {
         $request->validate([
-            'services_slugs'   => 'required|array',
+            'services_slugs' => 'required|array',
             'services_slugs.*' => 'string',
         ]);
 

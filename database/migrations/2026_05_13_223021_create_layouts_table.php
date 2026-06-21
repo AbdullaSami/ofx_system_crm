@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('label');
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
-            $table->unique(['label', 'service_id']);
+            $table->unique(['label', 'service_id', 'version']);
             $table->index('label');
             $table->softDeletes();
             $table->boolean('is_active')->default(true);
