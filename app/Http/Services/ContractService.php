@@ -20,7 +20,7 @@ class ContractService
             // Generate number safely inside transaction
             if(isset($data['contract_number'])) {
                 $contractNumber = $data['contract_number'];
-            } else {    
+            } else {
             $contractNumber = $this->generateContractNumber();
             }
 
@@ -71,6 +71,7 @@ class ContractService
     {
         return DB::transaction(function () use ($contract, $data) {
 
+        if(isset($data['employee_id'])){
             $contract->update([
                 'employee_id' => $data['employee_id'],
                 'start_date' => $data['start_date'],
@@ -81,7 +82,8 @@ class ContractService
                 'status' => $data['status'],
                 'signed_by' => $data['signed_by'] ?? null,
                 'payment_method' => $data['payment_method'] ?? null,
-            ]);
+                ]);
+        }
 
             if (isset($data['services'])) {
 
