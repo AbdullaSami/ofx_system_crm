@@ -41,7 +41,7 @@ class UpdateContractRequest extends FormRequest
 
             // Layout
             'services.*.layout'                => 'nullable|array',
-            'services.*.layout.id'             => 'sometimes_with:services.*.layout|integer|exists:layouts,id',
+            'services.*.layout.id'             => 'required_with:services.*.layout|integer|exists:layouts,id',
 
             // Answers
             'services.*.layout.fields'                         => 'nullable|array',
