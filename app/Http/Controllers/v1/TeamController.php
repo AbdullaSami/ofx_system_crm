@@ -62,16 +62,16 @@ class TeamController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
-                'service_slug' => 'sometimes|array',
-                'service_slug.*' => 'exists:services,id',
+                'service_slugs' => 'sometimes|array',
+                'service_slugs.*' => 'exists:services,id',
             ]);
 
             if (isset($validated['name'])) {
                 $team->update(['name' => $validated['name']]);
             }
 
-            if (isset($validated['service_slug'])) {
-                $services = Service::whereIn('slug', $validated['service_slug'])->get();
+            if (isset($validated['service_slugs'])) {
+                $services = Service::whereIn('slug', $validated['service_slugs'])->get();
 
                 $pivotData = [];
                 foreach ($services as $service) {
