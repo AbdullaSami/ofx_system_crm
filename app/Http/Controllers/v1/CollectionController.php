@@ -68,6 +68,15 @@ class CollectionController extends Controller
                 $service = Service::where('slug', $validatedData['service_slug'])->first();
                 $collection->services()->attach($service); // Sync with the new service ID or detach if not found
             }
+
+            $account = TreasuryAccount::where(
+                'account_name',
+                $collection->payment_method
+            )->firstOrFail();
+            if ($collection->amount_collected > 0) {
+                $collection->contract()->increment('amount_paid', $collection->amount_collected);
+                (new TreasuryAccountingService())->recordTransaction($account->id, $collection->amount_collected, 'credit');
+            }
             return response()->json(CollectionResource::make($collection), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create collection: ' . $e->getMessage()], 500);
@@ -141,7 +150,7 @@ class CollectionController extends Controller
                     $collection->payment_method
                 )->firstOrFail();
 
-                $type = $difference > 0 ? 'debit' : 'credit';
+                $type = $difference > 0 ? 'credit' : 'credit';
 
                 (new TreasuryAccountingService())->recordTransaction(
                     $account->id,
