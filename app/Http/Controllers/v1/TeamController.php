@@ -63,7 +63,7 @@ class TeamController extends Controller
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'service_slugs' => 'sometimes|array',
-                'service_slugs.*' => 'exists:services,id',
+                'service_slugs.*' => 'exists:services,slug',
             ]);
 
             if (isset($validated['name'])) {
