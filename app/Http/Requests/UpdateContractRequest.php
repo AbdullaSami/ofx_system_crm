@@ -24,11 +24,11 @@ class UpdateContractRequest extends FormRequest
     {
         return [
 
-            'employee_id'    => 'required|integer|exists:employees,id',
-            'start_date'     => 'required|date',
-            'end_date'       => 'required|date|after_or_equal:start_date',
-            'status'         => 'required|string|in:draft,active,expired,terminated,renewed',
-            'amount'         => 'required|numeric|min:0',
+            'employee_id'    => 'sometimes|integer|exists:employees,id',
+            'start_date'     => 'sometimes|date',
+            'end_date'       => 'sometimes|date|after_or_equal:start_date',
+            'status'         => 'sometimes|string|in:draft,active,expired,terminated,renewed',
+            'amount'         => 'sometimes|numeric|min:0',
             'discount'       => 'nullable|numeric|min:0',
             'notes'          => 'nullable|string',
             'signed_by'      => 'nullable|integer|exists:users,id',
@@ -36,16 +36,16 @@ class UpdateContractRequest extends FormRequest
 
             // Services
             'services'                         => 'nullable|array',
-            'services.*.slug'                    => 'required|string|exists:services,slug',
-            'services.*.unit_price'            => 'required|numeric|min:0',
+            'services.*.slug'                    => 'sometimes|string|exists:services,slug',
+            'services.*.unit_price'            => 'sometimes|numeric|min:0',
 
             // Layout
             'services.*.layout'                => 'nullable|array',
-            'services.*.layout.id'             => 'required_with:services.*.layout|integer|exists:layouts,id',
+            'services.*.layout.id'             => 'sometimes_with:services.*.layout|integer|exists:layouts,id',
 
             // Answers
             'services.*.layout.fields'                         => 'nullable|array',
-            'services.*.layout.fields.*.layout_field_id'       => 'required|integer|exists:layout_fields,id',
+            'services.*.layout.fields.*.layout_field_id'       => 'sometimes|integer|exists:layout_fields,id',
             'services.*.layout.fields.*.answer'                => 'nullable',
         ];
     }
