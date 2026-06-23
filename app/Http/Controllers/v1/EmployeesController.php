@@ -18,12 +18,53 @@ class EmployeesController extends Controller
         return response()->json(EmployeeResource::collection($employees));
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $employee = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->findOrFail($id);
-        if (!$employee) {
-            return response()->json(['message' => 'Employee not found'], 404);
-        }
+        $employee = Employee::with([
+            'salary',
+            'salaries',
+
+            'contracts' => function ($query) use ($request) {
+
+                if ($request->filled('start_date') && $request->filled('end_date')) {
+
+                    $startDate = $request->start_date;
+                    $endDate   = $request->end_date;
+
+                    $query->where(function ($q) use ($startDate, $endDate) {
+
+                        // Active contracts -> created_at
+                        $q->where(function ($sub) use ($startDate, $endDate) {
+                            $sub->where(function ($inner) {
+                                $inner->whereNull('is_terminated')
+                                    ->orWhere('is_terminated', false);
+                            })
+                                ->whereBetween('created_at', [$startDate, $endDate]);
+                        })
+
+                            // Terminated contracts -> terminated_date
+                            ->orWhere(function ($sub) use ($startDate, $endDate) {
+                                $sub->where('is_terminated', true)
+                                    ->whereNotNull('terminated_date')
+                                    ->whereBetween('terminated_date', [$startDate, $endDate]);
+                            });
+                    });
+                }
+            },
+
+            'commission' => function ($query) use ($request) {
+                if ($request->filled('start_date')) {
+                    $query->whereDate('effective_date', '>=', $request->start_date);
+                }
+
+                if ($request->filled('end_date')) {
+                    $query->whereDate('effective_date', '<=', $request->end_date);
+                }
+            },
+
+            'commissions',
+        ])->findOrFail($id);
+
         return response()->json(new EmployeeResource($employee));
     }
 
@@ -244,13 +285,13 @@ class EmployeesController extends Controller
 
         $contractsQuery = $employee->contracts()
             ->whereBetween('created_at', [$contractsFrom, $contractsTo])
-        ->where('status', 'active');
+            ->where('status', 'active');
 
         $totalContractsValue = $contractsQuery->sum('amount');
         $commissionRate = EmployeeCommission::where('employee_id', $employee->id)
-        ->where('amount', '>=', $totalContractsValue)
-        ->latest()
-        ->first()?->commission_rate ?? 0;
+            ->where('amount', '>=', $totalContractsValue)
+            ->latest()
+            ->first()?->commission_rate ?? 0;
 
         if ($commissionRate <= 0) {
             return response()->json(['message' => 'No commission rate found for the total contract value'], 400);
@@ -267,5 +308,4 @@ class EmployeesController extends Controller
 
         return response()->json(['message' => 'Commission paid successfully'], 200);
     }
-
 }

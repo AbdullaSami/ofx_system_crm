@@ -80,7 +80,7 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeSalary::class, 'employee_id');
     }
-    
+
     public function salaries(): HasMany
     {
         return $this->hasMany(Salary::class);
@@ -99,4 +99,6 @@ class Employee extends Model
     {
         return $this->hasMany(FollowUp::class, 'employee_id');
     }
+
+ 
 }
