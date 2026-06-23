@@ -71,7 +71,25 @@ class ContractController extends Controller
             );
 
             $contracts = $query->paginate(25);
-            $contracts->getCollection()->load($this->contractRelationsForResource());
+
+            $contracts->getCollection()->load(
+                $this->contractRelationsForResource()
+            );
+
+            $contracts->getCollection()->transform(function ($contract) {
+
+                $contract->services->each(function ($service) use ($contract) {
+
+                    $service->setRelation(
+                        'collections',
+                        $service->collections
+                            ->where('contract_id', $contract->id)
+                            ->values()
+                    );
+                });
+
+                return $contract;
+            });
 
             return ContractResource::collection($contracts);
         } catch (\Exception $e) {
@@ -178,7 +196,7 @@ class ContractController extends Controller
                 'status' => 'cancelled',
                 'is_cancelled' => true,
                 'cancelled_date' => now()
-                ]);
+            ]);
 
             // Handle refund logic for collections associated with the contract's services
             foreach ($contract->services as $service) {
@@ -189,7 +207,7 @@ class ContractController extends Controller
                             'status' => 'written_off',
                             'is_written_off' => true,
                             'written_off_date' => now()
-                            ]);
+                        ]);
                     }
                 }
             }
@@ -241,16 +259,7 @@ class ContractController extends Controller
             'collections',
             'layoutAnswers',
             'layoutAnswers.layoutField.layout',
-            'services' => function ($query) {
-                $query->with([
-                    'collections' => function ($collectionQuery) {
-                        $collectionQuery->whereColumn(
-                            'collections.contract_id',
-                            'contract_service.contract_id'
-                        );
-                    },
-                ]);
-            },
+            'services.collections',
         ];
     }
 }
