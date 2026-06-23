@@ -16,7 +16,7 @@ class TreasuryAccountingService
             TreasuryTransaction::create([
                 'treasury_account_id' => $treasuryAccountId,
                 'amount' => $amount,
-                'type' => $type,
+                'transaction_type' => $type,
                 'description' => $description,
             ]);
 

@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Permission\Traits\HasRoles;
@@ -73,9 +74,9 @@ class User extends Authenticatable
         return $this->hasMany(LayoutAnswer::class, 'answered_by');
     }
 
-    public function employee(): HasMany
+    public function employee(): HasOne
     {
-        return $this->hasMany(Employee::class, 'user_id');
+        return $this->hasOne(Employee::class, 'user_id');
     }
 
     public function personalAccessTokens(): MorphMany

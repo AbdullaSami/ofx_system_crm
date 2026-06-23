@@ -49,6 +49,7 @@ class CollectionController extends Controller
     public function store(StoreCollectionRequest $request)
     {
         try {
+            DB::beginTransaction();
             $validatedData = $request->validated();
 
             if (Collection::exceedsContractAmount(
@@ -77,8 +78,10 @@ class CollectionController extends Controller
                 $collection->contract()->increment('amount_paid', $collection->amount_collected);
                 (new TreasuryAccountingService())->recordTransaction($account->id, $collection->amount_collected, 'credit');
             }
+            DB::commit();
             return response()->json(CollectionResource::make($collection), 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['error' => 'Failed to create collection: ' . $e->getMessage()], 500);
         }
     }
@@ -106,7 +109,8 @@ class CollectionController extends Controller
             if (Collection::exceedsContractAmount(
                 $data['contract_id'],
                 $data['amount_collected'],
-                'amount_collected'
+                'amount_collected',
+                $collection->id
             )) {
                 return response()->json([
                     'message' => 'Total collected amount exceeds the contract amount.'

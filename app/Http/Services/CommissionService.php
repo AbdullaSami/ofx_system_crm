@@ -33,6 +33,6 @@ class CommissionService
             'status' => 'paid'
         ]);
 
-        return $commission->fresh();
+        return;
     }
 }

@@ -33,7 +33,7 @@ class ContractController extends Controller
             $query    = Contract::query()->with(['client', 'employee',]);
 
             // Scope non-admins to their own contracts immediately
-            if (! $user->hasRole('Admin')) {
+            if (!$user->hasRole('Admin')) {
                 $query->where('employee_id', $user->employee->id);
             }
 
@@ -168,7 +168,7 @@ class ContractController extends Controller
         try {
             $contract->update([
                 'status' => 'terminated',
-                'is_terminated' => false,
+                'is_terminated' => true,
                 'terminated_date' => now()
             ]);
             $contract->services()->update([

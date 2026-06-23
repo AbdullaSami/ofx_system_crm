@@ -244,7 +244,7 @@ class EmployeesController extends Controller
 
         $contractsQuery = $employee->contracts()
             ->whereBetween('created_at', [$contractsFrom, $contractsTo])
-        ->where('status', 'approved');
+        ->where('status', 'active');
 
         $totalContractsValue = $contractsQuery->sum('amount');
         $commissionRate = EmployeeCommission::where('employee_id', $employee->id)
