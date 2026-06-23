@@ -18,10 +18,10 @@ class ContractService
             $clientId = $data['client_id'] ?? $this->createClient($data)->id;
 
             // Generate number safely inside transaction
-            if(isset($data['contract_number'])) {
+            if (isset($data['contract_number'])) {
                 $contractNumber = $data['contract_number'];
             } else {
-            $contractNumber = $this->generateContractNumber();
+                $contractNumber = $this->generateContractNumber();
             }
 
             $contract = Contract::create([
@@ -44,7 +44,7 @@ class ContractService
                     ->pluck('id', 'slug'); // ['some-slug' => 1, 'other-slug' => 2]
 
                 $syncData = collect($data['services'])
-                    ->mapWithKeys(fn ($s) => [
+                    ->mapWithKeys(fn($s) => [
                         $serviceIds[$s['slug']] => [
                             'unit_price' => $s['unit_price'],
                             'quantity' => $s['quantity'] ?? 1,
@@ -71,22 +71,24 @@ class ContractService
     {
         return DB::transaction(function () use ($contract, $data) {
 
-        if(isset($data['employee_id'])){
-            $contract->update([
-                'employee_id' => $data['employee_id'],
-                'start_date' => $data['start_date'],
-                'end_date' => $data['end_date'],
-                'amount' => $data['amount'],
-                'refund_amount' => $data['refund_amount'],
-                'refund_date' => $data['refund_amount'] > 0 ? now() : null,
-                'is_refund' => $data['refund_amount'] > 0 ? true : false,
-                'discount' => $data['discount'] ?? 0,
-                'notes' => $data['notes'] ?? null,
-                'status' => $data['status'],
-                'signed_by' => $data['signed_by'] ?? null,
-                'payment_method' => $data['payment_method'] ?? null,
+            if (isset($data['employee_id'])) {
+                $refundAmount = $data['refund_amount'] ?? 0;
+
+                $contract->update([
+                    'employee_id'     => $data['employee_id'],
+                    'start_date'      => $data['start_date'],
+                    'end_date'        => $data['end_date'],
+                    'amount'          => $data['amount'],
+                    'refund_amount'   => $refundAmount,
+                    'refund_date'     => $refundAmount > 0 ? now() : null,
+                    'is_refund'       => $refundAmount > 0,
+                    'discount'        => $data['discount'] ?? 0,
+                    'notes'           => $data['notes'] ?? null,
+                    'status'          => $data['status'],
+                    'signed_by'       => $data['signed_by'] ?? null,
+                    'payment_method'  => $data['payment_method'] ?? null,
                 ]);
-        }
+            }
 
             if (isset($data['services'])) {
 
@@ -94,7 +96,7 @@ class ContractService
                     ->pluck('id', 'slug');
 
                 $syncData = collect($data['services'])
-                    ->mapWithKeys(fn ($s) => [
+                    ->mapWithKeys(fn($s) => [
                         $serviceIds[$s['slug']] => [
                             'unit_price' => $s['unit_price'],
                             'quantity' => $s['quantity'] ?? 1,
@@ -110,7 +112,7 @@ class ContractService
 
                 // Inject the resolved IDs back so storeLayoutAnswers can use them
                 $servicesWithIds = collect($data['services'])
-                    ->map(fn ($s) => array_merge($s, ['id' => $serviceIds[$s['slug']]]))
+                    ->map(fn($s) => array_merge($s, ['id' => $serviceIds[$s['slug']]]))
                     ->all();
 
                 $this->storeLayoutAnswers($contract, $servicesWithIds);
@@ -175,6 +177,6 @@ class ContractService
         $latest = Contract::lockForUpdate()->latest('id')->value('contract_number');
         $next = $latest ? ((int) substr($latest, -4)) + 1 : 1;
 
-        return 'CTR-'.now()->year.'-'.str_pad($next, 4, '0', STR_PAD_LEFT);
+        return 'CTR-' . now()->year . '-' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }
