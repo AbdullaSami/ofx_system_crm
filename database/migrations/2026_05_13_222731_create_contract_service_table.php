@@ -18,6 +18,9 @@ return new class extends Migration
             $table->unique(['contract_id', 'service_id']);
             $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 15, 2);
+            $table->boolean('is_refund')->nullable();
+            $table->date('refund_date')->nullable();
+            $table->decimal('refund_amount', 15, 2)->nullable();
             $table->decimal('discount', 5, 2)->default(0);
             $table->string('billing_frequency')->nullable();
             $table->enum('status', ['active', 'paused', 'cancelled'])->default('active');

@@ -72,16 +72,11 @@ class ContractService
         return DB::transaction(function () use ($contract, $data) {
 
             if (isset($data['employee_id'])) {
-                $refundAmount = $data['refund_amount'] ?? 0;
-
                 $contract->update([
                     'employee_id'     => $data['employee_id'],
                     'start_date'      => $data['start_date'],
                     'end_date'        => $data['end_date'],
                     'amount'          => $data['amount'],
-                    'refund_amount'   => $refundAmount,
-                    'refund_date'     => $refundAmount > 0 ? now() : null,
-                    'is_refund'       => $refundAmount > 0,
                     'discount'        => $data['discount'] ?? 0,
                     'notes'           => $data['notes'] ?? null,
                     'status'          => $data['status'],
@@ -90,6 +85,22 @@ class ContractService
                 ]);
             }
 
+            $refundAmount = $data['refund_amount'] ?? 0;
+
+            $service = Service::where('slug', $data['refund_service'])->get();
+            if (isset($data['refund_amount'])) {
+                $contract->update([
+                    'refund_amount'   => $refundAmount,
+                    'refund_date'     => $refundAmount > 0 ? now() : null,
+                    'is_refund'       => $refundAmount > 0,
+                ]);
+
+                $contract->services()->updateExistingPivot($service->id, [
+                    'refund_amount' => $refundAmount,
+                    'refund_date'   => $refundAmount > 0 ? now() : null,
+                    'is_refund'     => $refundAmount > 0,
+                ]);
+            }
             if (isset($data['services'])) {
 
                 $serviceIds = Service::whereIn('slug', collect($data['services'])->pluck('slug'))

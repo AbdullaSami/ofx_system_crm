@@ -30,6 +30,7 @@ class UpdateContractRequest extends FormRequest
             'status'         => 'sometimes|string|in:draft,active,expired,terminated,renewed',
             'amount'         => 'sometimes|numeric|min:0',
             'refund_amount'  => 'nullable|numeric|min:1',
+            'refund_service' => 'sometimes|string|exists:services,slug', 
             'discount'       => 'nullable|numeric|min:0',
             'notes'          => 'nullable|string',
             'signed_by'      => 'nullable|integer|exists:users,id',
