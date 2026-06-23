@@ -55,6 +55,13 @@ class Service extends Model
             ->withTimestamps();
     }
 
+
+    public function leads(): BelongsToMany
+    {
+        return $this->belongsToMany(Lead::class, 'lead_service', 'service_id', 'lead_id')
+            ->withTimestamps();
+    }
+    
     public function contracts(): BelongsToMany
     {
         return $this->belongsToMany(Contract::class, 'contract_service', 'service_id', 'contract_id')
@@ -62,15 +69,18 @@ class Service extends Model
             ->withTimestamps();
     }
 
-    public function leads(): BelongsToMany
-    {
-        return $this->belongsToMany(Lead::class, 'lead_service', 'service_id', 'lead_id')
-            ->withTimestamps();
-    }
-
     public function collections(): BelongsToMany
     {
         return $this->belongsToMany(Collection::class, 'service_collection_pivot', 'service_id', 'collection_id')
             ->withTimestamps();
+    }
+
+    /**
+     * Collections for this service scoped to a single contract.
+     * The pivot only links service + collection; collections.contract_id must be filtered explicitly.
+     */
+    public function collectionsForContract(int $contractId): BelongsToMany
+    {
+        return $this->collections()->where('collections.contract_id', $contractId);
     }
 }

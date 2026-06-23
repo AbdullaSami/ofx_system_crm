@@ -28,13 +28,18 @@ class ContractResource extends JsonResource
             'employee'        => $this->employee->employee_name ?? null,
 
 
-            'services' => $this->services->map(fn($service) => [
+            'services' => $this->services->map(function ($service) {
+                $serviceCollections = $service->relationLoaded('collections')
+                    ? $service->collections->where('contract_id', $this->id)
+                    : $service->collectionsForContract($this->id)->get();
+
+                return [
                 'id'         => $service->id,
                 'name'       => $service->name,
                 'slug'       => $service->slug,
                 'unit_price' => $service->pivot->unit_price,
-                'collections_count' => $service->collections->count(),
-                'collections' => $service->collections->map(fn($collection) => [
+                'collections_count' => $serviceCollections->count(),
+                'collections' => $serviceCollections->map(fn($collection) => [
                     'id'          => $collection->id,
                     'amount_due'        => $collection->amount_due,
                     'amount_collected'      => $collection->amount_collected,
@@ -61,7 +66,8 @@ class ContractResource extends JsonResource
                         ];
                     })
                     ->values(),
-            ]),
+                ];
+            }),
 
             'collections' => CollectionResource::collection($this->collections),
         ];

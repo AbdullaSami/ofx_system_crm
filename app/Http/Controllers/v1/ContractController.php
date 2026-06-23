@@ -70,7 +70,10 @@ class ContractController extends Controller
                 fn($q, $num) => $q->where('contract_number', 'like', "%{$num}%")
             );
 
-            return ContractResource::collection($query->paginate(25));
+            $contracts = $query->paginate(25);
+            $contracts->getCollection()->load($this->contractRelationsForResource());
+
+            return ContractResource::collection($contracts);
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contracts',
@@ -88,7 +91,7 @@ class ContractController extends Controller
         $contract = $contractService->create($request->validated());
         $commission = new CommissionService;
         $commission->addCommission($contract->id, $contract->amount, $contract->employee_id);
-        return (new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout'])))
+        return (new ContractResource($contract->load($this->contractRelationsForResource())))
             ->response()
             ->setStatusCode(201);
     }
@@ -103,7 +106,7 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         try {
-            return new ContractResource($contract->load(['services', 'services.collections', 'client', 'employee', 'layoutAnswers', 'layoutAnswers.layoutField.layout']));
+            return new ContractResource($contract->load($this->contractRelationsForResource()));
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve contract',
@@ -131,7 +134,7 @@ class ContractController extends Controller
         $commission->updateCommission($contract->id, $contract->amount, $contract->employee_id);
         return response()->json([
             'message' => 'Contract updated successfully.',
-            'data'    => new ContractResource($contract->load(['client', 'employee', 'services', 'layoutAnswers', 'layoutAnswers.layoutField.layout']))
+            'data'    => new ContractResource($contract->load($this->contractRelationsForResource()))
         ]);
     }
 
@@ -179,7 +182,7 @@ class ContractController extends Controller
 
             // Handle refund logic for collections associated with the contract's services
             foreach ($contract->services as $service) {
-                foreach ($service->collections as $collection) {
+                foreach ($service->collectionsForContract($contract->id)->get() as $collection) {
                     if ($collection->status === 'pending' || $collection->status === 'partial') {
                         // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
                         $collection->update([
@@ -209,7 +212,7 @@ class ContractController extends Controller
             $service->update(['status' => 'cancelled']);
 
             // Handle refund logic for collections associated with the service
-            foreach ($service->collections as $collection) {
+            foreach ($service->collectionsForContract($contract->id)->get() as $collection) {
                 if ($collection->status === 'pending' || $collection->status === 'partial') {
                     // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
                     $collection->update(['status' => 'written_off']);
@@ -225,5 +228,29 @@ class ContractController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Eager-load contract relations with service collections scoped to each contract.
+     */
+    private function contractRelationsForResource(): array
+    {
+        return [
+            'client',
+            'employee',
+            'collections',
+            'layoutAnswers',
+            'layoutAnswers.layoutField.layout',
+            'services' => function ($query) {
+                $query->with([
+                    'collections' => function ($collectionQuery) {
+                        $collectionQuery->whereColumn(
+                            'collections.contract_id',
+                            'contract_service.contract_id'
+                        );
+                    },
+                ]);
+            },
+        ];
     }
 }
