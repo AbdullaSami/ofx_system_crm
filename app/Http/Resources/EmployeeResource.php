@@ -63,17 +63,17 @@ class EmployeeResource extends JsonResource
                 // Step 1: Calculate effective sales value from contracts
                 $effectiveSalesValue = $this->contracts
                     ? $this->contracts->sum(function ($contract) {
+                        $refund = ($contract->is_refund && $contract->refund_amount)
+                            ? $contract->refund_amount
+                            : 0;
                         if ($contract->is_terminated) {
                             // Terminated: use amount_paid minus refund (if any)
                             $paid = $contract->amount_paid ?? 0;
-                            $refund = ($contract->is_refund && $contract->refund_amount)
-                                ? $contract->refund_amount
-                                : 0;
                             return $paid - $refund;
                         }
 
                         // Not terminated: use full contract amount
-                        return $contract->amount ?? 0;
+                        return $contract->amount - $refund ?? 0;
                     })
                     : 0;
 
