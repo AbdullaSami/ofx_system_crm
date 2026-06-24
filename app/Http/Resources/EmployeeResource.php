@@ -46,6 +46,11 @@ class EmployeeResource extends JsonResource
                     'id' => $contract->id,
                     'client_name' => $contract->client ? $contract->client->client_name : null,
                     'value' => $contract->amount,
+                    'is_terminated' => $contract->is_terminated,
+                    'terminated_date' => $contract->terminated_date,
+                    'is_refund' => $contract->is_refund,
+                    'refund_date' => $contract->refund_date,
+                    'refund_amount' => $contract->refund_amount,
                     'status' => $contract->status,
                 ];
             }) : null,
