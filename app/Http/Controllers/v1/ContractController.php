@@ -243,7 +243,7 @@ class ContractController extends Controller
                 'amount_paid' => $contract->amount_paid - $totalCollected,
             ]);
 
-            $service->update([
+            $contract->services()->updateExistingPivot($service->id,[
                 'status' => 'cancelled',
                 'is_cancelled' => true,
                 'cancelled_date' => now()
