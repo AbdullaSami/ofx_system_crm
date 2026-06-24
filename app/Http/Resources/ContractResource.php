@@ -53,7 +53,7 @@ class ContractResource extends JsonResource
                     'quantity'   => $service->pivot->quantity,
                     'discount'   => $service->pivot->discount,
                     'billing_frequency' => $service->pivot->billing_frequency,
-                    'collections_count' => $serviceCollections->pivot->count(),
+                    'collections_count' => $serviceCollections->count(),
                     'collections' => $serviceCollections->map(fn($collection) => [
                         'id'          => $collection->id,
                         'amount_due'        => $collection->amount_due,
