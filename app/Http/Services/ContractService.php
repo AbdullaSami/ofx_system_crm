@@ -71,38 +71,49 @@ class ContractService
     {
         return DB::transaction(function () use ($contract, $data) {
 
-            if (isset($data['employee_id'])) {
-                $contract->update([
-                    'employee_id'     => $data['employee_id'],
-                    'start_date'      => $data['start_date'],
-                    'end_date'        => $data['end_date'],
-                    'amount'          => $data['amount'],
-                    'discount'        => $data['discount'] ?? 0,
-                    'notes'           => $data['notes'] ?? null,
-                    'status'          => $data['status'],
-                    'signed_by'       => $data['signed_by'] ?? null,
-                    'payment_method'  => $data['payment_method'] ?? null,
-                ]);
+            // Update contract fields if any are provided
+            $contractFields = array_filter([
+                'employee_id'     => $data['employee_id'] ?? null,
+                'start_date'      => $data['start_date'] ?? null,
+                'end_date'        => $data['end_date'] ?? null,
+                'amount'          => $data['amount'] ?? null,
+                'discount'        => $data['discount'] ?? null,
+                'notes'           => $data['notes'] ?? null,
+                'status'          => $data['status'] ?? null,
+                'signed_by'       => $data['signed_by'] ?? null,
+                'payment_method'  => $data['payment_method'] ?? null,
+            ], fn($value) => $value !== null);
+
+            if (!empty($contractFields)) {
+                $contract->update($contractFields);
             }
 
-            $refundAmount = $data['refund_amount'] ?? 0;
-
-            $service = Service::where('slug', $data['refund_service'])->get();
+            // Handle refund logic
             if (isset($data['refund_amount'])) {
+                $refundAmount = $data['refund_amount'];
+
                 $contract->update([
                     'refund_amount'   => $refundAmount,
                     'refund_date'     => $refundAmount > 0 ? now() : null,
                     'is_refund'       => $refundAmount > 0,
                 ]);
 
-                $contract->services()->updateExistingPivot($service->id, [
-                    'refund_amount' => $refundAmount,
-                    'refund_date'   => $refundAmount > 0 ? now() : null,
-                    'is_refund'     => $refundAmount > 0,
-                ]);
-            }
-            if (isset($data['services'])) {
+                // Update service pivot if refund_service is provided
+                if (isset($data['refund_service'])) {
+                    $service = Service::where('slug', $data['refund_service'])->first();
 
+                    if ($service) {
+                        $contract->services()->updateExistingPivot($service->id, [
+                            'refund_amount' => $refundAmount,
+                            'refund_date'   => $refundAmount > 0 ? now() : null,
+                            'is_refund'     => $refundAmount > 0,
+                        ]);
+                    }
+                }
+            }
+
+            // Handle services update
+            if (isset($data['services'])) {
                 $serviceIds = Service::whereIn('slug', collect($data['services'])->pluck('slug'))
                     ->pluck('id', 'slug');
 
