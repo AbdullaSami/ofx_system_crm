@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('contract_id')->constrained()->onDelete('cascade');
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
             $table->primary(['contract_id', 'service_id']);
-            $table->unique(['contract_id', 'service_id']);
+            // $table->unique(['contract_id', 'service_id']);
             $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 15, 2);
             $table->boolean('is_refund')->nullable();
