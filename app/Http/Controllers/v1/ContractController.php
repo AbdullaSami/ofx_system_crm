@@ -243,7 +243,11 @@ class ContractController extends Controller
                 'amount_paid' => $contract->amount_paid - $totalCollected,
             ]);
 
-            $service->update(['status' => 'cancelled']);
+            $service->update([
+                'status' => 'cancelled',
+                'is_cancelled' => true,
+                'cancelled_date' => now()
+                ]);
 
             // Handle refund logic for collections associated with the service
             foreach ($service->collectionsForContract($contract->id)->get() as $collection) {

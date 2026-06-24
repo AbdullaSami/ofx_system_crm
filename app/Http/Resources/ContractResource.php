@@ -44,6 +44,8 @@ class ContractResource extends JsonResource
                     'name'       => $service->name,
                     'slug'       => $service->slug,
                     'status'     => $service->status,
+                    'is_cancelled'     => $service->is_cancelled,
+                    'cancelled_date'     => $service->cancelled_date,
                     'unit_price' => $service->pivot->unit_price,
                     'collections_count' => $serviceCollections->count(),
                     'collections' => $serviceCollections->map(fn($collection) => [
