@@ -227,6 +227,22 @@ class ContractController extends Controller
     {
         try {
             $service = $contract->services()->where('slug', $service_slug)->firstOrFail();
+
+            // Calculate service total price from pivot
+            $pivot = $service->pivot;
+            $serviceTotalPrice = ($pivot->unit_price * $pivot->quantity) - $pivot->discount;
+
+            // Calculate total amount collected for this service
+            $totalCollected = $service->collectionsForContract($contract->id)
+                ->get()
+                ->sum('amount_collected');
+
+            // Update contract amount: deduct service price, add back any collected amount
+            $contract->update([
+                'amount' => $contract->amount - $serviceTotalPrice + $totalCollected,
+                'amount_paid' => $contract->amount_paid - $totalCollected,
+            ]);
+
             $service->update(['status' => 'cancelled']);
 
             // Handle refund logic for collections associated with the service
