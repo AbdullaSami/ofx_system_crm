@@ -30,6 +30,7 @@ class ContractResource extends JsonResource
             'created_at'      => $this->created_at?->toDateTimeString(),
 
             'client'          => $this->client->client_name ?? null,
+            'company'          => $this->client->company ?? null,
             'client_id'          => $this->client->id ?? null,
             'employee'        => $this->employee->employee_name ?? null,
 
