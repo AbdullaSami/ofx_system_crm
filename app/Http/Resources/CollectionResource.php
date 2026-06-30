@@ -19,7 +19,7 @@ class CollectionResource extends JsonResource
             'contract_id'      => $this->contract_id,
             'client_id'        => $this->client_id,
             'contract_number'  => $this->whenLoaded('contract', fn() => $this->contract->contract_number),
-            'employee_name'    => $this->whenLoaded('contract', fn() => $this->contract->employee?->name),
+            'employee_name'    => $this->whenLoaded('contract', fn() => $this->contract->employee->employee_name),
             'client_name'      => $this->whenLoaded('client', fn() => $this->client->client_name),
             'company'      => $this->whenLoaded('client', fn() => $this->client->company),
             'amount_due'       => $this->amount_due,
