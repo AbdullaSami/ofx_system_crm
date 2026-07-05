@@ -13,6 +13,7 @@ use App\Http\Controllers\v1\ContractController;
 use App\Http\Controllers\v1\ClientController;
 use App\Http\Controllers\v1\CollectionController;
 use App\Http\Controllers\v1\TreasuryController;
+use App\Http\Controllers\v1\ExpenseController;
 
 
 Route::get('/user', function (Request $request) {
@@ -39,3 +40,7 @@ Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractContr
 Route::apiResource('clients', ClientController::class);
 Route::apiResource('collections', CollectionController::class);
 Route::apiResource('treasury', TreasuryController::class);
+
+Route::apiResource('expenses', ExpenseController::class);
+Route::delete('expenses/{expense}/attachments/{attachment}', [ExpenseController::class, 'destroyAttachment'])
+    ->name('expenses.attachments.destroy');
