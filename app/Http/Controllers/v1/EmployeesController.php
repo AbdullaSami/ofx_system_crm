@@ -3,18 +3,20 @@
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\ExpenseService;
 use App\Models\Employee;
 use App\Models\EmployeeCommission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\EmployeeResource;
+use App\Models\Expense;
+use App\Models\TreasuryAccount;
 
 class EmployeesController extends Controller
 {
     public function index()
     {
         $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
-
         return response()->json(EmployeeResource::collection($employees));
     }
 
@@ -264,17 +266,35 @@ class EmployeesController extends Controller
             'status' => 'nullable|in:pending,approved,paid',
         ]);
 
-        $employee->salaries()->create([
-            'amount' => $validatedData['amount'],
-            'currency' => 'EGP',
-            'bonus' => $validatedData['bonus'] ?? 0,
-            'deductions' => $validatedData['deductions'] ?? 0,
-            'payment_method' => $validatedData['payment_method'] ?? null,
-            'effective_date' => now(),
-            'status' => $validatedData['status'] ?? 'paid',
-        ]);
+        try {
+            DB::beginTransaction();
+            $employee->salaries()->create([
+                'amount' => $validatedData['amount'],
+                'currency' => 'EGP',
+                'bonus' => $validatedData['bonus'] ?? 0,
+                'deductions' => $validatedData['deductions'] ?? 0,
+                'payment_method' => $validatedData['payment_method'] ?? null,
+                'effective_date' => now(),
+                'status' => $validatedData['status'] ?? 'paid',
+            ]);
 
-        return response()->json(['message' => 'Salary paid successfully'], 200);
+            $expenseService = new ExpenseService();
+            $treasuryId = TreasuryAccount::where('name', $validatedData['payment_method'])->first()?->id;
+            $expenseService->create([
+                'treasury_id' => $treasuryId,
+                'expense_type' => Expense::TYPE_WAGE,
+                'expensable_type' => Employee::class,
+                'expensable_id' => $employee->id,
+                'amount' => $validatedData['amount'] + ($validatedData['bonus'] ?? 0) - ($validatedData['deductions'] ?? 0),
+                'expense_date' => now(),
+                'description' => 'Pay Salary for employee: ' . $employee->employee_name,
+            ]);
+            DB::commit();
+            return response()->json(['message' => 'Salary paid successfully'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to pay salary', 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function payCommission(Request $request, $id)
@@ -298,14 +318,31 @@ class EmployeesController extends Controller
         }
         $totalCommission = ($totalContractsValue * $commissionRate) / 100;
 
-        $employee->commission()->create([
-            'total_contracts_value' => $totalContractsValue,
-            'commission_rate' => $commissionRate,
-            'total_commission' => $totalCommission,
-            'effective_date' => now(),
-            'status' => 'paid',
-        ]);
-
-        return response()->json(['message' => 'Commission paid successfully'], 200);
+        try {
+            DB::beginTransaction();
+            $employee->commission()->create([
+                'total_contracts_value' => $totalContractsValue,
+                'commission_rate' => $commissionRate,
+                'total_commission' => $totalCommission,
+                'effective_date' => now(),
+                'status' => 'paid',
+            ]);
+            $expenseService = new ExpenseService();
+            $treasuryId = TreasuryAccount::where('name', $request->input('payment_method'))->first()?->id;
+            $expenseService->create([
+                'treasury_id' => $treasuryId,
+                'expense_type' => Expense::TYPE_WAGE,
+                'expensable_type' => Employee::class,
+                'expensable_id' => $employee->id,
+                'amount' => $totalCommission,
+                'expense_date' => now(),
+                'description' => 'Pay Commission for employee: ' . $employee->employee_name,
+            ]);
+            DB::commit();
+            return response()->json(['message' => 'Commission paid successfully'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to pay commission', 'error' => $e->getMessage()], 500);
+        }
     }
 }

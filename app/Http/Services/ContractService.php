@@ -7,7 +7,9 @@ use App\Models\Contract;
 use App\Models\LayoutAnswer;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
-
+use App\Http\Services\ExpenseService;
+use App\Models\Expense;
+use App\Models\TreasuryAccount;
 class ContractService
 {
     public function create(array $data): Contract
@@ -109,6 +111,21 @@ class ContractService
                             'is_refund'     => $refundAmount > 0,
                         ]);
                     }
+                }
+
+                $expenseService = new ExpenseService();
+                $treasuryId = TreasuryAccount::where('name', $contract->payment_method)->first()?->id;
+                // Create an expense record for the refund
+                if (isset($data['account_name']) && $data['refund_amount'] > 0) {
+                    $expenseService->create([
+                        'treasury_id' => $treasuryId,
+                        'expense_type' => Expense::TYPE_REFUND,
+                        'expensable_type' => Contract::class,
+                        'expensable_id' => $contract->id,
+                        'amount' => $data['refund_amount'],
+                        'expense_date' => now(),
+                        'description' => 'Refund for contract: ' . $contract->contract_number,
+                    ]);
                 }
             }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Http\Services;
 
 use App\Models\Collection;
 use App\Models\Employee;
@@ -24,6 +24,7 @@ class ExpenseService
             Expense::TYPE_WAGE => Employee::class,
             Expense::TYPE_REFUND => Collection::class,
             Expense::TYPE_GENERAL => null,
+            Expense::TYPE_PAY_BILL => null,
             default => null,
         };
     }
