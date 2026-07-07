@@ -18,7 +18,7 @@ class ExpenseResource extends JsonResource
 
             'treasury' => $this->whenLoaded('treasury', fn () => [
                 'id' => $this->treasury->id,
-                'name' => $this->treasury->name,
+                'name' => $this->treasury->account_name,
                 'balance' => (float) $this->treasury->balance,
             ]),
 
