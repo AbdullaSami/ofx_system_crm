@@ -13,8 +13,7 @@ return new class extends Migration
 
             $table->foreignId('treasury_id')
                 ->constrained('treasury_accounts')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
+                ->cascadeOnDelete();
 
             // wage -> Employee, refund -> Collection, general -> null
             $table->enum('expense_type', ['wage', 'refund', 'general'])->index();
