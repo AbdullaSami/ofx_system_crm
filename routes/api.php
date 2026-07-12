@@ -46,4 +46,4 @@ Route::apiResource('expenses', ExpenseController::class);
 Route::delete('expenses/{expense}/attachments/{attachment}', [ExpenseController::class, 'destroyAttachment'])
     ->name('expenses.attachments.destroy');
 
-Route::get('reports/dashboard', [ReportsController::class, 'dashboard'])->middleware('auth:sanctum');
+Route::get('reports/dashboard', [ReportsController::class, 'dashboard']);
