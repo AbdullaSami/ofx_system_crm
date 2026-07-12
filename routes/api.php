@@ -14,6 +14,7 @@ use App\Http\Controllers\v1\ClientController;
 use App\Http\Controllers\v1\CollectionController;
 use App\Http\Controllers\v1\TreasuryController;
 use App\Http\Controllers\v1\ExpenseController;
+use App\Http\Controllers\v1\ReportsController;
 
 
 Route::get('/user', function (Request $request) {
@@ -44,3 +45,5 @@ Route::apiResource('treasury', TreasuryController::class);
 Route::apiResource('expenses', ExpenseController::class);
 Route::delete('expenses/{expense}/attachments/{attachment}', [ExpenseController::class, 'destroyAttachment'])
     ->name('expenses.attachments.destroy');
+
+Route::get('reports/dashboard', [ReportsController::class, 'dashboard'])->middleware('auth:sanctum');
