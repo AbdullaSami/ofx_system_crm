@@ -24,7 +24,7 @@ class ReportsController extends Controller
      *   - month            (integer) Filter by month (1-12)
      *   - sales_representative (integer) Employee ID
      *   - customer         (integer) Client ID
-     *   - service          (integer) Service ID
+     *   - service          (string) Service ID
      */
     public function dashboard(Request $request): JsonResponse
     {
@@ -35,7 +35,7 @@ class ReportsController extends Controller
             'month'                => 'nullable|integer|min:1|max:12',
             'sales_representative' => 'nullable|integer|exists:employees,id',
             'customer'             => 'nullable|integer|exists:clients,id',
-            'service'              => 'nullable|integer|exists:services,id',
+            'service'              => 'nullable|string|exists:services,slug',
         ]);
 
         // Non-admin users are scoped to their own data only

@@ -477,7 +477,7 @@ class ReportsService
 
         $query->when($filters['service'] ?? null, function ($q, $serviceId) {
             $q->whereHas('services', function ($sub) use ($serviceId) {
-                $sub->where('services.id', $serviceId);
+                $sub->where('services.slug', $serviceId);
             });
         });
     }
@@ -515,7 +515,7 @@ class ReportsService
 
         $query->when($filters['service'] ?? null, function ($q, $serviceId) {
             $q->whereHas('services', function ($sub) use ($serviceId) {
-                $sub->where('services.id', $serviceId);
+                $sub->where('services.slug', $serviceId);
             });
         });
     }
@@ -553,7 +553,7 @@ class ReportsService
 
         $query->when($filters['service'] ?? null, function ($q, $serviceId) {
             $q->whereHas('contract.services', function ($sub) use ($serviceId) {
-                $sub->where('services.id', $serviceId);
+                $sub->where('services.slug', $serviceId);
             });
         });
     }
