@@ -70,7 +70,7 @@ class ContractController extends Controller
                 fn($q, $num) => $q->where('contract_number', 'like', "%{$num}%")
             );
 
-            $contracts = $query->paginate(25);
+            $contracts = $query->orderBy('created_at', 'desc')->paginate(25);
 
             $contracts->getCollection()->load(
                 $this->contractRelationsForResource()

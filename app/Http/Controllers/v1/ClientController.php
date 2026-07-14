@@ -21,6 +21,7 @@ class ClientController extends Controller
                     ->orWhere('status', 'like', "%{$search}%");
 
             })
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
         return response()->json($clients);
         } catch (\Exception $e) {

@@ -24,7 +24,7 @@ class ReportsController extends Controller
      *   - month            (integer) Filter by month (1-12)
      *   - sales_representative (integer) Employee ID
      *   - customer         (integer) Client ID
-     *   - service          (string) Service ID
+     *   - service          (string) Service slug
      */
     public function dashboard(Request $request): JsonResponse
     {
