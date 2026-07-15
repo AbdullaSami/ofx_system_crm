@@ -41,9 +41,12 @@ class ContractController extends Controller
             $query->when($validated['search'] ?? null, function ($q, $search) {
                 $q->where(function ($inner) use ($search) {
                     $inner->where('contract_number', 'like', "%{$search}%")
-                        ->orWhereHas('client', fn($c) => $c->where('client_name', 'like', "%{$search}%"));
+                        ->orWhereHas('client', function ($c) use ($search) {
+                            $c->where('client_name', 'like', "%{$search}%")
+                                ->orWhere('company', 'like', "%{$search}%");
+                        });
                 });
-            });
+            });;
 
             $query->when(
                 $validated['status'] ?? null,
@@ -243,11 +246,11 @@ class ContractController extends Controller
                 'amount_paid' => $contract->amount_paid - $totalCollected,
             ]);
 
-            $contract->services()->updateExistingPivot($service->id,[
+            $contract->services()->updateExistingPivot($service->id, [
                 'status' => 'cancelled',
                 'is_cancelled' => true,
                 'cancelled_date' => now()
-                ]);
+            ]);
 
             // Handle refund logic for collections associated with the service
             foreach ($service->collectionsForContract($contract->id)->get() as $collection) {

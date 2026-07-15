@@ -27,6 +27,7 @@ class ReportsResource extends JsonResource
             'collected_amount'          => $this->resource['collected_amount'] ?? null,
             'payment_method_comparison' => $this->resource['payment_method_comparison'] ?? [],
             'advertisement_spending'    => $this->resource['advertisement_spending'] ?? [],
+            'service_comparison'        => $this->resource['service_comparison'] ?? [],
         ];
     }
 }

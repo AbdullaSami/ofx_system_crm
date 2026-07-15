@@ -31,6 +31,7 @@ class ReportsService
             'collected_amount'          => $this->getCollectedAmount($filters),
             'payment_method_comparison' => $this->getPaymentMethodComparison($filters),
             'advertisement_spending'    => $this->getAdvertisementSpending($filters),
+            'service_comparison' => $this->getServiceComparison($filters),
         ];
     }
 
@@ -177,16 +178,20 @@ class ReportsService
             ->join('clients', 'contracts.client_id', '=', 'clients.id')
             ->select(
                 'clients.client_name as customer_name',
+                'clients.company as customer_company',
+                'clients.phone as customer_phone',
                 DB::raw('COUNT(contracts.id) as number_of_contracts'),
                 DB::raw('SUM(contracts.amount_paid) as total_paid'),
                 DB::raw('SUM(contracts.amount) as total_contract_value')
             )
-            ->groupBy('clients.id', 'clients.client_name')
+            ->groupBy('clients.id', 'clients.client_name', 'clients.company', 'clients.phone')
             ->orderByDesc('total_contract_value')
             ->limit(10)
             ->get()
             ->map(fn($item) => [
                 'customer_name' => $item->customer_name,
+                'customer_company' => $item->customer_company,
+                'customer_phone' => $item->customer_phone,
                 'number_of_contracts' => (int) $item->number_of_contracts,
                 'total_paid' => round((float) $item->total_paid, 2),
                 'total_contract_value' => round((float) $item->total_contract_value, 2),
@@ -217,6 +222,7 @@ class ReportsService
             ])
             ->toArray();
     }
+
 
     /**
      * Report 7: Platform Generating the Most Leads.
@@ -444,6 +450,50 @@ class ReportsService
         });
 
         return $advertisementSpending;
+    }
+
+    /**
+     * Report 13: Services comparing the number of contracts and revenue generated.
+     */
+    protected function getServiceComparison(array $filters): array
+    {
+        $contractsQuery = Contract::query();
+        $this->applyContractFilters($contractsQuery, $filters);
+        $contractIds = $contractsQuery->pluck('id');
+
+        if ($contractIds->isEmpty()) {
+            return [];
+        }
+
+        $services = DB::table('contract_service')
+            ->join('services', 'contract_service.service_id', '=', 'services.id')
+            ->whereIn('contract_service.contract_id', $contractIds)
+            ->whereNull('contract_service.deleted_at')
+            ->select(
+                'services.name',
+                DB::raw('COUNT(DISTINCT contract_service.contract_id) as total_contracts'),
+                DB::raw('SUM((contract_service.unit_price * contract_service.quantity) - contract_service.discount) as total_revenue')
+            )
+            ->groupBy('services.id', 'services.name')
+            ->orderByDesc('total_revenue')
+            ->get();
+
+        $totalRevenueAllServices = $services->sum('total_revenue');
+
+        return $services
+            ->map(function ($item) use ($totalRevenueAllServices) {
+                $percentage = $totalRevenueAllServices > 0
+                    ? ($item->total_revenue / $totalRevenueAllServices) * 100
+                    : 0;
+
+                return [
+                    'name' => $item->name,
+                    'total_contracts' => (int) $item->total_contracts,
+                    'total_revenue' => round((float) $item->total_revenue, 2),
+                    'percentage_of_total_sales' => round($percentage, 2),
+                ];
+            })
+            ->toArray();
     }
 
     /**
