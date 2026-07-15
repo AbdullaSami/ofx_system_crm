@@ -36,7 +36,7 @@ class UserController extends Controller
         $validated = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
         ])->validate();
 
         $user = User::create([
@@ -67,7 +67,7 @@ class UserController extends Controller
         $validated = Validator::make($request->all(), [
             'name'     => 'sometimes|required|string|max:255',
             'email'    => ['sometimes', 'required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'password' => 'sometimes|required|string|min:8|confirmed',
+            'password' => 'sometimes|required|string|min:8',
         ])->validate();
 
         if (isset($validated['password'])) {
