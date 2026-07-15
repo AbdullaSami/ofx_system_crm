@@ -15,7 +15,7 @@ use App\Http\Controllers\v1\CollectionController;
 use App\Http\Controllers\v1\TreasuryController;
 use App\Http\Controllers\v1\ExpenseController;
 use App\Http\Controllers\v1\ReportsController;
-
+use App\Http\Controllers\v1\UserController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -24,7 +24,7 @@ Route::get('/user', function (Request $request) {
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-
+Route::apiResource('users', UserController::class);
 Route::apiResource('departments', DepartmentController::class);
 Route::apiResource('services', ServiceController::class);
 Route::post('service/layouts', [ServiceController::class, 'getServicesLayouts']);
