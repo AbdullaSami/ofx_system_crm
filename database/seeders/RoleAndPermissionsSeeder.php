@@ -69,7 +69,7 @@ Schema::enableForeignKeyConstraints();
         $salesRole = Role::create(['name' => 'Sales']);
         $technicalRole = Role::create(['name' => 'Technical']);
 
-        User::create([
+        User::firstOrCreate([
             'name' => 'Admin User',
             'email' => 'admin@ofx.com',
             'password' => bcrypt('password')
