@@ -7,7 +7,8 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\User;
-
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 class RoleAndPermissionsSeeder extends Seeder
 {
     /**
@@ -15,12 +16,19 @@ class RoleAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        // Clear cache
-        app()["cache"]->forget("spatie.permission.cache");
+// Clear cache
+app()['cache']->forget('spatie.permission.cache');
 
-        // Reset and create roles
-        Role::truncate();
-        Permission::truncate();
+// Reset and create roles
+Schema::disableForeignKeyConstraints();
+
+Role::truncate();
+Permission::truncate();
+DB::table('model_has_roles')->truncate();
+DB::table('model_has_permissions')->truncate();
+DB::table('role_has_permissions')->truncate();
+
+Schema::enableForeignKeyConstraints();
 
         // Create Permissions
         $models = [
