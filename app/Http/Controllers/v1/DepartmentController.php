@@ -4,7 +4,7 @@ namespace App\Http\Controllers\v1;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller as BaseController;
+use Illuminate\Routing\Controller as BaseController;
 
 class DepartmentController extends BaseController
 {

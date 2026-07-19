@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller as BaseController;
+use Illuminate\Routing\Controller as BaseController;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
 use App\Http\Resources\ExpenseResource;

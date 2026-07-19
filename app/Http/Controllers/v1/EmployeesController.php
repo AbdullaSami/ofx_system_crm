@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller as BaseContoller;
+use Illuminate\Routing\Controller as BaseContoller;
 use App\Http\Services\ExpenseService;
 use App\Models\Employee;
 use App\Models\EmployeeCommission;
