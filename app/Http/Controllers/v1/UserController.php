@@ -46,6 +46,8 @@ class UserController extends BaseController
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'role'     => 'required|string',
+            'permissions'=> 'array',
+            'permissions.*'=> 'string',
         ])->validate();
 
         $user = User::create([
@@ -56,6 +58,10 @@ class UserController extends BaseController
 
         if (isset($validated['role'])) {
             $user->assignRole($validated['role']);
+        }
+
+        if (isset($validated['permissions'])) {
+            $user->syncPermissions($validated['permissions']);
         }
 
         return response()->json([
@@ -82,6 +88,8 @@ class UserController extends BaseController
             'email'    => ['sometimes', 'required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'sometimes|required|string|min:8',
             'role'     => 'sometimes|required|string',
+            'permissions'=> 'array',
+            'permissions.*'=> 'string',
         ])->validate();
 
         if (isset($validated['password'])) {
@@ -90,6 +98,10 @@ class UserController extends BaseController
 
         if (isset($validated['role'])) {
             $user->syncRoles([$validated['role']]);
+        }
+
+        if (isset($validated['permissions'])) {
+            $user->syncPermissions($validated['permissions']);
         }
 
         $user->update($validated);
