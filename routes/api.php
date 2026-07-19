@@ -20,18 +20,18 @@ use App\Http\Controllers\v1\UserController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/permissions', function () {
-    return \Spatie\Permission\Models\Permission::all();
-});
-Route::get('/roles', function () {
-    return \Spatie\Permission\Models\Role::all();
-});
 Route::middleware('auth:sanctum')->group(function () {
-
+    
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/permissions', function () {
+        return \Spatie\Permission\Models\Permission::all();
+    });
+    Route::get('/roles', function () {
+        return \Spatie\Permission\Models\Role::all();
+    });
     Route::apiResource('users', UserController::class);
 Route::apiResource('departments', DepartmentController::class);
 Route::apiResource('services', ServiceController::class);
