@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use App\Http\Resources\ReportsResource;
 use App\Http\Services\ReportsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ReportsController extends Controller
+class ReportsController extends BaseController
 {
     public function __construct(protected ReportsService $reportsService)
     {
+        $this->middleware('permission:reports.viewAny')->only('dashboard');
     }
 
     /**

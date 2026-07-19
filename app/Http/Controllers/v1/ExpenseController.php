@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
 use App\Http\Resources\ExpenseResource;
@@ -12,10 +12,16 @@ use App\Http\Services\ExpenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ExpenseController extends Controller
+class ExpenseController extends BaseController
 {
     public function __construct(protected ExpenseService $expenseService)
     {
+        $this->middleware('permission:expenses.viewAny')->only('index');
+        $this->middleware('permission:expenses.view')->only('show');
+        $this->middleware('permission:expenses.create')->only('store');
+        $this->middleware('permission:expenses.update')->only('update');
+        $this->middleware('permission:expenses.delete')->only('destroy');
+        $this->middleware('permission:expenses.delete')->only('destroyAttachment');
     }
 
     public function index(Request $request): JsonResponse

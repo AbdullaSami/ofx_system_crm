@@ -4,11 +4,22 @@ namespace App\Http\Controllers\v1;
 
 use App\Models\Service;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Support\Facades\DB;
 
-class ServiceController extends Controller
+class ServiceController extends BaseController
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->except('getServicesLayouts');
+        $this->middleware('permission:services.viewAny')->only('index');
+        $this->middleware('permission:services.view')->only('show');
+        $this->middleware('permission:services.create')->only('store');
+        $this->middleware('permission:services.update')->only('update');
+        $this->middleware('permission:services.delete')->only('destroy');
+    }
+
     public function index()
     {
         try {

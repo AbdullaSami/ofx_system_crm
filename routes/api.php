@@ -17,14 +17,22 @@ use App\Http\Controllers\v1\ExpenseController;
 use App\Http\Controllers\v1\ReportsController;
 use App\Http\Controllers\v1\UserController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::apiResource('users', UserController::class);
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+    Route::get('/permissions', function () {
+        return \Spatie\Permission\Models\Permission::all();
+    });
+    Route::get('/roles', function () {
+        return \Spatie\Permission\Models\Role::all();
+    });
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::apiResource('users', UserController::class);
 Route::apiResource('departments', DepartmentController::class);
 Route::apiResource('services', ServiceController::class);
 Route::post('service/layouts', [ServiceController::class, 'getServicesLayouts']);
@@ -34,9 +42,9 @@ Route::post('employees/{id}/salary', [EmployeesController::class, 'paySalary']);
 Route::post('employees/{id}/commission', [EmployeesController::class, 'payCommission']);
 Route::apiResource('leads', LeadController::class);
 Route::apiResource('follow-ups', FollowUpController::class);
-Route::apiResource('contracts', ContractController::class)->middleware('auth:sanctum');
-Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancelContract'])->middleware('auth:sanctum');
-Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractController::class, 'cancelSingleService'])->middleware('auth:sanctum');
+Route::apiResource('contracts', ContractController::class);
+Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancelContract']);
+Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractController::class, 'cancelSingleService']);
 // Route::get('layout/{id}/create', [ContractController::class, 'create']);
 Route::apiResource('clients', ClientController::class);
 Route::apiResource('collections', CollectionController::class);
@@ -47,3 +55,4 @@ Route::delete('expenses/{expense}/attachments/{attachment}', [ExpenseController:
     ->name('expenses.attachments.destroy');
 
 Route::get('reports/dashboard', [ReportsController::class, 'dashboard']);
+});

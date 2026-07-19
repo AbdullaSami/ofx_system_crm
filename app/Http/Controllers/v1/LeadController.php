@@ -2,11 +2,20 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Http\Request;
 use App\Models\Lead;
-class LeadController extends Controller
+class LeadController extends BaseController
 {
+    
+    public function __construct() {
+        $this->middleware('permission:leads.viewAny')->only('index');
+        $this->middleware('permission:leads.view')->only('show');
+        $this->middleware('permission:leads.create')->only('store');
+        $this->middleware('permission:leads.update')->only('update');
+        $this->middleware('permission:leads.delete')->only('destroy');
+    }
+
     public function index()
     {
         try {

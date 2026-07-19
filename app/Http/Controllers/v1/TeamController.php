@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use App\Models\Service;
 use App\Models\Team;
 use Illuminate\Http\Request;
 
-class TeamController extends Controller
+class TeamController extends BaseController
 {
+    public function __construct() {
+        $this->middleware('permission:teams.viewAny')->only('index');
+        $this->middleware('permission:teams.view')->only('show');
+        $this->middleware('permission:teams.create')->only('store');
+        $this->middleware('permission:teams.update')->only('update');
+        $this->middleware('permission:teams.delete')->only('destroy');
+    }
+
     public function index()
     {
         try {

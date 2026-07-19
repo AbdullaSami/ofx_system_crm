@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseContoller;
 use App\Http\Services\ExpenseService;
 use App\Models\Employee;
 use App\Models\EmployeeCommission;
@@ -12,8 +12,18 @@ use App\Http\Resources\EmployeeResource;
 use App\Models\Expense;
 use App\Models\TreasuryAccount;
 
-class EmployeesController extends Controller
+class EmployeesController extends BaseContoller
 {
+    
+    public function __construct() {
+        $this->middleware('auth:sanctum')->except(['paySalary', 'payCommission']);
+        $this->middleware('permission:employees.viewAny')->only('index');
+        $this->middleware('permission:employees.view')->only('show');
+        $this->middleware('permission:employees.create')->only('store');
+        $this->middleware('permission:employees.update')->only('update');
+        $this->middleware('permission:employees.delete')->only('destroy');
+    }
+
     public function index()
     {
         $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();

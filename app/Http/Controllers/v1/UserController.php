@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,8 +10,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
+    public function __construct() {
+        $this->middleware('permission:users.viewAny')->only('index');
+        $this->middleware('permission:users.view')->only('show');
+        $this->middleware('permission:users.create')->only('store');
+        $this->middleware('permission:users.update')->only('update');
+        $this->middleware('permission:users.delete')->only('destroy');
+    }
+    
     /**
      * Get all users, optionally searched by name.
      */

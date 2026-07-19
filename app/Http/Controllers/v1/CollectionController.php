@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use App\Http\Resources\CollectionResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -14,8 +14,17 @@ use App\Http\Requests\UpdateCollectionRequest;
 use App\Http\Services\TreasuryAccountingService;
 use App\Models\TreasuryAccount;
 
-class CollectionController extends Controller
+class CollectionController extends BaseController
 {
+
+    public function __construct() {
+        $this->middleware('permission:collections.viewAny')->only('index');
+        $this->middleware('permission:collections.view')->only('show');
+        $this->middleware('permission:collections.create')->only('store');
+        $this->middleware('permission:collections.update')->only('update');
+        $this->middleware('permission:collections.delete')->only('destroy');
+    }
+
     public function index(Request $request)
     {
         try {

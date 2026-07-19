@@ -2,11 +2,21 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Http\Request;
 use App\Models\Client;
-class ClientController extends Controller
+class ClientController extends BaseController
 {
+
+    public function __construct() {
+        $this->middleware('permission:clients.viewAny')->only('index');
+        $this->middleware('permission:clients.view')->only('show');
+        $this->middleware('permission:clients.create')->only('store');
+        $this->middleware('permission:clients.update')->only('update');
+        $this->middleware('permission:clients.delete')->only('destroy');
+    }
+
+
     public function index(Request $request)
     {
         $search = $request->query('search');

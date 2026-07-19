@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Http\Request;
 use App\Models\Contract;
 use App\Http\Resources\ContractResource;
@@ -11,8 +11,17 @@ use App\Http\Requests\UpdateContractRequest;
 use App\Http\Services\ContractService;
 use App\Http\Services\CommissionService;
 
-class ContractController extends Controller
+class ContractController extends BaseController
 {
+    
+    public function __construct() {
+        $this->middleware('auth:sanctum')->except(['cancelContract', 'cancelSingleService']);
+        $this->middleware('permission:contracts.viewAny')->only('index');
+        $this->middleware('permission:contracts.view')->only('show');
+        $this->middleware('permission:contracts.create')->only('store');
+        $this->middleware('permission:contracts.update')->only('update');
+        $this->middleware('permission:contracts.delete')->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */

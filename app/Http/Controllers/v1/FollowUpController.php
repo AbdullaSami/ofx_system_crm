@@ -2,12 +2,21 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use App\Models\FollowUp;
 use Illuminate\Http\Request;
 
-class FollowUpController extends Controller
+class FollowUpController extends BaseController
 {
+    
+    public function __construct() {
+        $this->middleware('permission:follow-ups.viewAny')->only('index');
+        $this->middleware('permission:follow-ups.view')->only('show');
+        $this->middleware('permission:follow-ups.create')->only('store');
+        $this->middleware('permission:follow-ups.update')->only('update');
+        $this->middleware('permission:follow-ups.delete')->only('destroy');
+    }
+
     public function index()
     {
         try {

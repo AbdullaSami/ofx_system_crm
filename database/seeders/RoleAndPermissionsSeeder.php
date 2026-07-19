@@ -15,17 +15,56 @@ class RoleAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Clear cache
+        app()["cache"]->forget("spatie.permission.cache");
+
+        // Reset and create roles
+        Role::truncate();
+        Permission::truncate();
+
+        // Create Permissions
+        $models = [
+            'users',
+            'departments',
+            'services',
+            'teams',
+            'employees',
+            'leads',
+            'follow-ups',
+            'contracts',
+            'clients',
+            'collections',
+            'treasury',
+            'expenses',
+            'reports',
+        ];
+
+        $actions = [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+        ];
+
+        foreach ($models as $model) {
+            foreach ($actions as $action) {
+                Permission::create([
+                    'name' => $model . '.' . $action
+                ]);
+            }
+        }
         // Create roles
-        $AdminRole = Role::create(['name' => 'Admin']);
-        $EmployeeRole = Role::create(['name' => 'Employee']);
-        $TeamLeadRole = Role::create(['name' => 'Team Lead']);
-        $SalesRole = Role::create(['name' => 'Sales']);
-        $TechnicalRole = Role::create(['name' => 'Technical']);
+        $adminRole = Role::create(['name' => 'Admin']);
+        $employeeRole = Role::create(['name' => 'Employee']);
+        $teamLeadRole = Role::create(['name' => 'Team Lead']);
+        $salesRole = Role::create(['name' => 'Sales']);
+        $technicalRole = Role::create(['name' => 'Technical']);
 
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@ofx.com',
             'password' => bcrypt('password')
-        ])->assignRole('Admin');
+        ])->assignRole($adminRole);
     }
 }
