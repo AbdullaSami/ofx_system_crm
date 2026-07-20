@@ -19,13 +19,13 @@ class UserController extends BaseController
         $this->middleware('permission:users.update')->only('update');
         $this->middleware('permission:users.delete')->only('destroy');
     }
-    
+
     /**
      * Get all users, optionally searched by name.
      */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::query()->with(['roles.permissions', 'permissions']);
 
         $query->when($request->input('search'), function ($q, $search) {
             $q->where('name', 'like', "%{$search}%");
