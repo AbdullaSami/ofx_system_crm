@@ -56,6 +56,14 @@ class ContractService
                         ],
                     ])->all();
 
+                    $collection = $contract->collections()->create([
+                        'client_id' => $clientId,
+                        'amount_due' => $data['amount'],
+                        'due_date' => $data['end_date'],
+                        'payment_method' => $data['payment_method'] ?? null,
+                        'status' => 'pending',
+                        'notes' => 'Initial collection for contract: ' . $contract->contract_number,
+                    ]);
                 $contract->services()->sync($syncData);
 
                 // Store layout answers
