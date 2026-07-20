@@ -72,7 +72,7 @@ Schema::enableForeignKeyConstraints();
         $adminRole->givePermissionTo(Permission::all());
         $adminUser = User::firstOrCreate([
             'name' => 'Admin User',
-            'email' => 'admin@ofx.com',
+            'email' => 'test_admin@ofx.com',
             'password' => bcrypt('password')
         ]);
         $adminUser->assignRole($adminRole);
