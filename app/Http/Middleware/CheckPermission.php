@@ -16,7 +16,7 @@ class CheckPermission
     public function handle(Request $request, Closure $next): Response
     {
         $permission = $request->route()->getName();
-        $user = $request->user();
+        $user = auth()->user();
 
         if (!$user || !$user->can($permission)) {
             return response()->json(['message' => 'Forbidden — missing permission'], 403);
