@@ -69,6 +69,7 @@ Schema::enableForeignKeyConstraints();
         $salesRole = Role::create(['name' => 'Sales']);
         $technicalRole = Role::create(['name' => 'Technical']);
 
+        $adminRole->givePermissionTo(Permission::all());
         User::firstOrCreate([
             'name' => 'Admin User',
             'email' => 'admin@ofx.com',
