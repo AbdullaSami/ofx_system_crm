@@ -21,9 +21,20 @@ use App\Http\Controllers\v1\UserController;
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+
+        return [
+            ...$user->toArray(),
+            'roles' => $user->roles()->with('permissions')->get()->map(function ($role) {
+                return [
+                    'name' => $role->name,
+                    'permissions' => $role->permissions->pluck('name'),
+                ];
+            }),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+        ];
     });
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/permissions', function () {
@@ -33,26 +44,26 @@ Route::middleware('auth:sanctum')->group(function () {
         return \Spatie\Permission\Models\Role::all();
     });
     Route::apiResource('users', UserController::class);
-Route::apiResource('departments', DepartmentController::class);
-Route::apiResource('services', ServiceController::class);
-Route::post('service/layouts', [ServiceController::class, 'getServicesLayouts']);
-Route::apiResource('teams', TeamController::class);
-Route::apiResource('employees', EmployeesController::class);
-Route::post('employees/{id}/salary', [EmployeesController::class, 'paySalary']);
-Route::post('employees/{id}/commission', [EmployeesController::class, 'payCommission']);
-Route::apiResource('leads', LeadController::class);
-Route::apiResource('follow-ups', FollowUpController::class);
-Route::apiResource('contracts', ContractController::class);
-Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancelContract']);
-Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractController::class, 'cancelSingleService']);
-// Route::get('layout/{id}/create', [ContractController::class, 'create']);
-Route::apiResource('clients', ClientController::class);
-Route::apiResource('collections', CollectionController::class);
-Route::apiResource('treasury', TreasuryController::class);
+    Route::apiResource('departments', DepartmentController::class);
+    Route::apiResource('services', ServiceController::class);
+    Route::post('service/layouts', [ServiceController::class, 'getServicesLayouts']);
+    Route::apiResource('teams', TeamController::class);
+    Route::apiResource('employees', EmployeesController::class);
+    Route::post('employees/{id}/salary', [EmployeesController::class, 'paySalary']);
+    Route::post('employees/{id}/commission', [EmployeesController::class, 'payCommission']);
+    Route::apiResource('leads', LeadController::class);
+    Route::apiResource('follow-ups', FollowUpController::class);
+    Route::apiResource('contracts', ContractController::class);
+    Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancelContract']);
+    Route::post('contracts/{contract}/service/{service_slug}/cancel', [ContractController::class, 'cancelSingleService']);
+    // Route::get('layout/{id}/create', [ContractController::class, 'create']);
+    Route::apiResource('clients', ClientController::class);
+    Route::apiResource('collections', CollectionController::class);
+    Route::apiResource('treasury', TreasuryController::class);
 
-Route::apiResource('expenses', ExpenseController::class);
-Route::delete('expenses/{expense}/attachments/{attachment}', [ExpenseController::class, 'destroyAttachment'])
-    ->name('expenses.attachments.destroy');
+    Route::apiResource('expenses', ExpenseController::class);
+    Route::delete('expenses/{expense}/attachments/{attachment}', [ExpenseController::class, 'destroyAttachment'])
+        ->name('expenses.attachments.destroy');
 
-Route::get('reports/dashboard', [ReportsController::class, 'dashboard']);
+    Route::get('reports/dashboard', [ReportsController::class, 'dashboard']);
 });

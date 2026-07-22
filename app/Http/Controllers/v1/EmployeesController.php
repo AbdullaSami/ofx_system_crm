@@ -14,8 +14,9 @@ use App\Models\TreasuryAccount;
 
 class EmployeesController extends BaseContoller
 {
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->middleware('auth:sanctum')->except(['paySalary', 'payCommission']);
         $this->middleware('permission:employees.viewAny')->only('index');
         $this->middleware('permission:employees.view')->only('show');
@@ -93,6 +94,8 @@ class EmployeesController extends BaseContoller
             'target' => 'nullable|numeric',
             'team_id' => 'nullable|exists:teams,id',
             'role' => 'nullable|exists:roles,name',
+            'permissions' => 'array',
+            'permissions.*' => 'string',
             'is_user' => 'nullable|boolean',
             'password' => 'nullable|string|min:6',
             'commissions' => 'nullable|array',
@@ -121,6 +124,9 @@ class EmployeesController extends BaseContoller
                 ]);
                 if (isset($validatedData['role'])) {
                     $user->assignRole($validatedData['role']);
+                }
+                if (isset($validatedData['permissions'])) {
+                    $user->syncPermissions($validatedData['permissions']);
                 }
             }
 
@@ -167,6 +173,8 @@ class EmployeesController extends BaseContoller
             'target'        => 'nullable|numeric',
             'team_id'       => 'nullable|exists:teams,id',
             'role'          => 'nullable|exists:roles,name',
+            'permissions' => 'array',
+            'permissions.*' => 'string',
             'is_user'       => 'nullable|boolean',
             'password'      => 'nullable|string|min:6',
             'commissions'   => 'nullable|array',
@@ -201,6 +209,9 @@ class EmployeesController extends BaseContoller
 
                 if (isset($validatedData['role'])) {
                     $user->syncRoles([$validatedData['role']]);
+                }
+                if (isset($validatedData['permissions'])) {
+                    $user->syncPermissions($validatedData['permissions']);
                 }
             }
 
