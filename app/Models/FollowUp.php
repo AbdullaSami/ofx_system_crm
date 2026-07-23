@@ -51,12 +51,10 @@ class FollowUp extends Model
         }
 
         if ($user->can('follow-ups.view.own')) {
-            $employeeId = $user->employee?->id;
-            abort_if(
-                ! $employeeId,
-                403,
-                'Your account has no linked employee record. Contact an administrator.'
-            );
+            $employeeId = $user->getEmployeeId();
+            if (! $employeeId) {
+                return $query->whereRaw('1 = 0');
+            }
             return $query->where('employee_id', $employeeId);
         }
 

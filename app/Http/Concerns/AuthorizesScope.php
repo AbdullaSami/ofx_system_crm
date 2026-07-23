@@ -21,7 +21,6 @@ use App\Models\User;
  *   {module}.view.own   → scope to records owned by the authenticated employee
  *
  * If neither permission is present, abort(403) is called.
- * If the user has view.own but has no linked employee record, abort(403).
  */
 trait AuthorizesScope
 {
@@ -45,24 +44,22 @@ trait AuthorizesScope
 
         // Own-only view: scope by employee
         if ($user->can("{$module}.view.own")) {
-            $employee = $user->employee;
-            abort_if(
-                ! $employee,
-                403,
-                'Your account has no linked employee record. Contact an administrator.'
-            );
-            return $query->where($ownerColumn, $employee->id);
+            $employeeId = $user->getEmployeeId();
+            if (! $employeeId) {
+                return $query->whereRaw('1 = 0');
+            }
+            return $query->where($ownerColumn, $employeeId);
         }
 
         abort(403, "You do not have permission to view {$module}.");
     }
 
     /**
-     * Authorize that the current user can mutate (update/delete) a specific record.
+     * Authorize that the current user can access/mutate (view/update/delete) a specific record.
      *
      * @param  mixed   $record         The Eloquent model instance to check.
      * @param  string  $module         The permission module (e.g. 'clients').
-     * @param  string  $action         The action: 'update' or 'delete'.
+     * @param  string  $action         The action: 'view', 'update', or 'delete'.
      * @param  string  $ownerColumn    The ownership column on the record (e.g. 'assigned_to').
      */
     protected function authorizeRecordAccess(
@@ -74,21 +71,16 @@ trait AuthorizesScope
         /** @var User $user */
         $user = auth()->user();
 
-        // Global permission: can mutate anything
+        // Global permission: can access anything
         if ($user->can("{$module}.{$action}")) {
             return;
         }
 
-        // Own-scoped permission: can only mutate own records
+        // Own-scoped permission: can only access own records
         if ($user->can("{$module}.{$action}.own")) {
-            $employee = $user->employee;
+            $employeeId = $user->getEmployeeId();
             abort_if(
-                ! $employee,
-                403,
-                'Your account has no linked employee record. Contact an administrator.'
-            );
-            abort_if(
-                (int) $record->{$ownerColumn} !== (int) $employee->id,
+                ! $employeeId || (int) $record->{$ownerColumn} !== (int) $employeeId,
                 403,
                 "You do not have permission to {$action} this {$module} record."
             );

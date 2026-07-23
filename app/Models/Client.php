@@ -71,12 +71,10 @@ class Client extends Model
         }
 
         if ($user->can('clients.view.own')) {
-            $employeeId = $user->employee?->id;
-            abort_if(
-                ! $employeeId,
-                403,
-                'Your account has no linked employee record. Contact an administrator.'
-            );
+            $employeeId = $user->getEmployeeId();
+            if (! $employeeId) {
+                return $query->whereRaw('1 = 0');
+            }
             return $query->where('assigned_to', $employeeId);
         }
 

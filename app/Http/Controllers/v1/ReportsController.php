@@ -44,13 +44,8 @@ class ReportsController extends BaseController
         // Scope non-global viewers to their own data only
         if ($user && ! $user->can('reports.view')) {
             if ($user->can('reports.view.own')) {
-                $employeeId = $user->employee?->id;
-                abort_if(
-                    ! $employeeId,
-                    403,
-                    'Your account has no linked employee record. Contact an administrator.'
-                );
-                $validated['sales_representative'] = $employeeId;
+                $employeeId = $user->getEmployeeId();
+                $validated['sales_representative'] = $employeeId ?: 0;
             } else {
                 abort(403, 'You do not have permission to view reports.');
             }

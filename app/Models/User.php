@@ -83,4 +83,26 @@ class User extends Authenticatable
     {
         return $this->morphMany(PersonalAccessToken::class, 'tokenable');
     }
+
+    /**
+     * Get the associated Employee ID for this user.
+     * Auto-links an unlinked Employee record matching the user's email if available.
+     */
+    public function getEmployeeId(): ?int
+    {
+        if ($this->employee) {
+            return $this->employee->id;
+        }
+
+        $employee = Employee::where('email', $this->email)->first();
+        if ($employee) {
+            if (is_null($employee->user_id)) {
+                $employee->update(['user_id' => $this->id]);
+                $this->unsetRelation('employee');
+            }
+            return $employee->id;
+        }
+
+        return null;
+    }
 }
