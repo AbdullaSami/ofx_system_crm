@@ -30,8 +30,8 @@ class EmployeesController extends BaseContoller
 
     public function index()
     {
-        $user = Auth::user();
-        if($user->can('employees.view')) {
+        $user = auth()->user();
+        if ($user->can('employees.view')) {
             $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
         } else {
             $employees = Employee::where('user_id', $user->id)->with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
