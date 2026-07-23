@@ -30,7 +30,12 @@ class EmployeesController extends BaseContoller
 
     public function index()
     {
-        $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
+        $user = Auth::user();
+        if($user->can('employees.view')) {
+            $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
+        } else {
+            $employees = Employee::where('user_id', $user->id)->with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
+        }
         return response()->json(EmployeeResource::collection($employees));
     }
 
