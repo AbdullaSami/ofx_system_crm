@@ -33,6 +33,28 @@ class ExpenseService
     {
         $query = Expense::query()->with(['treasury', 'expensable', 'attachments']);
 
+        return $this->applyFilters($query, $filters);
+    }
+
+    /**
+     * List expenses using a pre-scoped query (e.g. after visibleTo() is applied).
+     * This allows the controller to inject authorization scope before filtering.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query  Pre-scoped query from controller
+     * @param  array  $filters
+     */
+    public function listScoped(\Illuminate\Database\Eloquent\Builder $query, array $filters = [])
+    {
+        $query->with(['treasury', 'expensable', 'attachments']);
+
+        return $this->applyFilters($query, $filters);
+    }
+
+    /**
+     * Apply standard filters to an expense query.
+     */
+    protected function applyFilters(\Illuminate\Database\Eloquent\Builder $query, array $filters)
+    {
         if (!empty($filters['treasury_id'])) {
             $query->where('treasury_id', $filters['treasury_id']);
         }

@@ -12,20 +12,20 @@ class ReportsController extends BaseController
 {
     public function __construct(protected ReportsService $reportsService)
     {
-        $this->middleware('permission:reports.viewAny')->only('dashboard');
+        $this->middleware('permission:reports.view|reports.view.own')->only('dashboard');
     }
 
     /**
      * Return the full reports dashboard payload.
      *
      * Optional query parameters:
-     *   - from_date        (date)    Start of date range
-     *   - to_date          (date)    End of date range
-     *   - year             (integer) Filter by year
-     *   - month            (integer) Filter by month (1-12)
+     *   - from_date            (date)    Start of date range
+     *   - to_date              (date)    End of date range
+     *   - year                 (integer) Filter by year
+     *   - month                (integer) Filter by month (1-12)
      *   - sales_representative (integer) Employee ID
-     *   - customer         (integer) Client ID
-     *   - service          (string) Service slug
+     *   - customer             (integer) Client ID
+     *   - service              (string) Service slug
      */
     public function dashboard(Request $request): JsonResponse
     {
@@ -39,10 +39,21 @@ class ReportsController extends BaseController
             'service'              => 'nullable|string|exists:services,slug',
         ]);
 
-        // Non-admin users are scoped to their own data only
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin')) {
-            $validated['sales_representative'] = $user->employee->id ?? null;
+
+        // Scope non-global viewers to their own data only
+        if ($user && ! $user->can('reports.view')) {
+            if ($user->can('reports.view.own')) {
+                $employeeId = $user->employee?->id;
+                abort_if(
+                    ! $employeeId,
+                    403,
+                    'Your account has no linked employee record. Contact an administrator.'
+                );
+                $validated['sales_representative'] = $employeeId;
+            } else {
+                abort(403, 'You do not have permission to view reports.');
+            }
         }
 
         try {

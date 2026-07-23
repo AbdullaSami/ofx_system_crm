@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1;
 
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Resources\CollectionResource;
+use App\Http\Concerns\AuthorizesScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -16,26 +17,30 @@ use App\Models\TreasuryAccount;
 
 class CollectionController extends BaseController
 {
+    use AuthorizesScope;
 
-    public function __construct() {
-        $this->middleware('permission:collections.viewAny')->only('index');
-        $this->middleware('permission:collections.view')->only('show');
+    public function __construct()
+    {
+        $this->middleware('permission:collections.view|collections.view.own')->only('index');
+        $this->middleware('permission:collections.view|collections.view.own')->only('show');
         $this->middleware('permission:collections.create')->only('store');
-        $this->middleware('permission:collections.update')->only('update');
-        $this->middleware('permission:collections.delete')->only('destroy');
+        $this->middleware('permission:collections.update|collections.update.own')->only('update');
+        $this->middleware('permission:collections.delete|collections.delete.own')->only('destroy');
     }
 
     public function index(Request $request)
     {
         try {
-
-            $search = $request->query('search');
-            $dateFrom = $request->query('date_from');
-            $dateTo = $request->query('date_to');
+            $search     = $request->query('search');
+            $dateFrom   = $request->query('date_from');
+            $dateTo     = $request->query('date_to');
             $employeeId = $request->query('employee_id');
-            $status = $request->query('status');
+            $status     = $request->query('status');
 
-            $query = Collection::with(['contract.employee', 'client', 'services']);
+            $query = Collection::query()
+                ->with(['contract.employee', 'client', 'services'])
+                ->visibleTo(auth()->user());  // Data-scope based on permission
+
             if ($search) {
                 $query->where('amount', 'like', "%{$search}%");
             }
@@ -43,7 +48,7 @@ class CollectionController extends BaseController
                 $query->whereBetween('collection_date', [$dateFrom, $dateTo]);
             }
             if ($employeeId) {
-                $query->where(fn($q) => $q->whereHas('contract', fn($q) => $q->where('employee_id', $employeeId)));
+                $query->where(fn ($q) => $q->whereHas('contract', fn ($q) => $q->where('employee_id', $employeeId)));
             }
             if ($status) {
                 $query->where('status', $status);

@@ -12,12 +12,12 @@ class ServiceController extends BaseController
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except('getServicesLayouts');
-        $this->middleware('permission:services.viewAny')->only('index');
-        $this->middleware('permission:services.view')->only('show');
+        // All service routes require authentication — getServicesLayouts is also protected
+        $this->middleware('permission:services.view|services.view.own')->only(['index', 'getServicesLayouts']);
+        $this->middleware('permission:services.view|services.view.own')->only('show');
         $this->middleware('permission:services.create')->only('store');
-        $this->middleware('permission:services.update')->only('update');
-        $this->middleware('permission:services.delete')->only('destroy');
+        $this->middleware('permission:services.update|services.update.own')->only('update');
+        $this->middleware('permission:services.delete|services.delete.own')->only('destroy');
     }
 
     public function index()

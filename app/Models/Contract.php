@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -76,5 +77,30 @@ class Contract extends Model
     public function layoutAnswers(): HasMany
     {
         return $this->hasMany(LayoutAnswer::class, 'contract_id');
+    }
+
+    /**
+     * Scope a query to only include records visible to the given user.
+     *
+     * contracts.view      → all contracts
+     * contracts.view.own  → only contracts belonging to the user's employee
+     */
+    public function scopeVisibleTo(Builder $query, \App\Models\User $user): Builder
+    {
+        if ($user->can('contracts.view')) {
+            return $query;
+        }
+
+        if ($user->can('contracts.view.own')) {
+            $employeeId = $user->employee?->id;
+            abort_if(
+                ! $employeeId,
+                403,
+                'Your account has no linked employee record. Contact an administrator.'
+            );
+            return $query->where('employee_id', $employeeId);
+        }
+
+        abort(403, 'You do not have permission to view contracts.');
     }
 }

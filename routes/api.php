@@ -39,10 +39,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/permissions', function () {
         return \Spatie\Permission\Models\Permission::all();
-    });
+    })->middleware('permission:users.view');
     Route::get('/roles', function () {
         return \Spatie\Permission\Models\Role::all();
-    });
+    })->middleware('permission:users.view');
     Route::apiResource('users', UserController::class);
     Route::apiResource('departments', DepartmentController::class);
     Route::apiResource('services', ServiceController::class);

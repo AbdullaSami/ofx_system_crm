@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -47,5 +48,30 @@ class Lead extends Model
     public function followUps(): HasMany
     {
         return $this->hasMany(FollowUp::class, 'lead_id');
+    }
+
+    /**
+     * Scope a query to only include records visible to the given user.
+     *
+     * leads.view      → all leads
+     * leads.view.own  → only leads assigned to the user's employee
+     */
+    public function scopeVisibleTo(Builder $query, \App\Models\User $user): Builder
+    {
+        if ($user->can('leads.view')) {
+            return $query;
+        }
+
+        if ($user->can('leads.view.own')) {
+            $employeeId = $user->employee?->id;
+            abort_if(
+                ! $employeeId,
+                403,
+                'Your account has no linked employee record. Contact an administrator.'
+            );
+            return $query->where('assigned_to', $employeeId);
+        }
+
+        abort(403, 'You do not have permission to view leads.');
     }
 }

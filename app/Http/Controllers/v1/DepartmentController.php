@@ -10,11 +10,11 @@ class DepartmentController extends BaseController
 {
     
     public function __construct() {
-        $this->middleware('permission:departments.viewAny')->only('index');
-        $this->middleware('permission:departments.view')->only('show');
+        $this->middleware('permission:departments.view|departments.view.own')->only('index');
+        $this->middleware('permission:departments.view|departments.view.own')->only('show');
         $this->middleware('permission:departments.create')->only('store');
-        $this->middleware('permission:departments.update')->only('update');
-        $this->middleware('permission:departments.delete')->only('destroy');
+        $this->middleware('permission:departments.update|departments.update.own')->only('update');
+        $this->middleware('permission:departments.delete|departments.delete.own')->only('destroy');
     }
 
     public function index()
@@ -54,8 +54,12 @@ class DepartmentController extends BaseController
     public function update(Request $request, $department)
     {
         try {
-            $department = Department::where('slug', $department)->first();
-            $department->update($request->all());
+            $validated = $request->validate([
+                'name'        => 'sometimes|string|max:255',
+                'description' => 'nullable|string',
+            ]);
+            $department = Department::where('slug', $department)->firstOrFail();
+            $department->update($validated);
             return response()->json($department);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);

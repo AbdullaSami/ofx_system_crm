@@ -17,12 +17,15 @@ class EmployeesController extends BaseContoller
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except(['paySalary', 'payCommission']);
-        $this->middleware('permission:employees.viewAny')->only('index');
-        $this->middleware('permission:employees.view')->only('show');
+        // All employee routes require authentication — no exceptions
+        $this->middleware('permission:employees.view|employees.view.own')->only('index');
+        $this->middleware('permission:employees.view|employees.view.own')->only('show');
         $this->middleware('permission:employees.create')->only('store');
-        $this->middleware('permission:employees.update')->only('update');
-        $this->middleware('permission:employees.delete')->only('destroy');
+        $this->middleware('permission:employees.update|employees.update.own')->only('update');
+        $this->middleware('permission:employees.delete|employees.delete.own')->only('destroy');
+        // Financial operations require dedicated permissions
+        $this->middleware('permission:employees.pay_salary')->only('paySalary');
+        $this->middleware('permission:employees.pay_commission')->only('payCommission');
     }
 
     public function index()

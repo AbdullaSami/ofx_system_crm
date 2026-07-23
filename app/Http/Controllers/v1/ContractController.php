@@ -10,18 +10,23 @@ use App\Http\Requests\StoreContractRequest;
 use App\Http\Requests\UpdateContractRequest;
 use App\Http\Services\ContractService;
 use App\Http\Services\CommissionService;
+use App\Http\Concerns\AuthorizesScope;
 
 class ContractController extends BaseController
 {
-    
-    public function __construct() {
-        $this->middleware('auth:sanctum')->except(['cancelContract', 'cancelSingleService']);
-        $this->middleware('permission:contracts.viewAny')->only('index');
-        $this->middleware('permission:contracts.view')->only('show');
+    use AuthorizesScope;
+
+    public function __construct()
+    {
+        // All contract routes require authentication — no exceptions
+        $this->middleware('permission:contracts.view|contracts.view.own')->only('index');
+        $this->middleware('permission:contracts.view|contracts.view.own')->only('show');
         $this->middleware('permission:contracts.create')->only('store');
-        $this->middleware('permission:contracts.update')->only('update');
-        $this->middleware('permission:contracts.delete')->only('destroy');
+        $this->middleware('permission:contracts.update|contracts.update.own')->only('update');
+        $this->middleware('permission:contracts.delete|contracts.delete.own')->only('destroy');
+        $this->middleware('permission:contracts.cancel')->only(['cancelContract', 'cancelSingleService']);
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -38,15 +43,11 @@ class ContractController extends BaseController
         ]);
 
         try {
-            $user     = auth()->user();
-            $query    = Contract::query()->with(['client', 'employee',]);
+            $user  = auth()->user();
+            $query = Contract::query()
+                ->with(['client', 'employee'])
+                ->visibleTo($user);  // Data-scope: respects contracts.view vs contracts.view.own
 
-            // Scope non-admins to their own contracts immediately
-            if (!$user->hasRole('Admin')) {
-                $query->where('employee_id', $user->employee->id);
-            }
-
-            // Apply filters directly on the query builder
             $query->when($validated['search'] ?? null, function ($q, $search) {
                 $q->where(function ($inner) use ($search) {
                     $inner->where('contract_number', 'like', "%{$search}%")
@@ -55,31 +56,31 @@ class ContractController extends BaseController
                                 ->orWhere('company', 'like', "%{$search}%");
                         });
                 });
-            });;
+            });
 
             $query->when(
                 $validated['status'] ?? null,
-                fn($q, $status) => $q->where('status', $status)
+                fn ($q, $status) => $q->where('status', $status)
             );
 
             $query->when(
                 isset($validated['date_from'], $validated['date_to']),
-                fn($q) => $q->whereBetween('start_date', [$validated['date_from'], $validated['date_to']])
+                fn ($q) => $q->whereBetween('start_date', [$validated['date_from'], $validated['date_to']])
             );
 
             $query->when(
                 $validated['employee_id'] ?? null,
-                fn($q, $id) => $q->where('employee_id', $id)
+                fn ($q, $id) => $q->where('employee_id', $id)
             );
 
             $query->when(
                 $validated['client_id'] ?? null,
-                fn($q, $id) => $q->where('client_id', $id)
+                fn ($q, $id) => $q->where('client_id', $id)
             );
 
             $query->when(
                 $validated['contract_number'] ?? null,
-                fn($q, $num) => $q->where('contract_number', 'like', "%{$num}%")
+                fn ($q, $num) => $q->where('contract_number', 'like', "%{$num}%")
             );
 
             $contracts = $query->orderBy('created_at', 'desc')->paginate(25);
@@ -89,9 +90,7 @@ class ContractController extends BaseController
             );
 
             $contracts->getCollection()->transform(function ($contract) {
-
                 $contract->services->each(function ($service) use ($contract) {
-
                     $service->setRelation(
                         'collections',
                         $service->collections
@@ -115,26 +114,25 @@ class ContractController extends BaseController
     /**
      * Store a newly created resource in storage.
      */
-
     public function store(StoreContractRequest $request, ContractService $contractService)
     {
-        $contract = $contractService->create($request->validated());
-        $commission = new CommissionService;
+        $contract    = $contractService->create($request->validated());
+        $commission  = new CommissionService;
         $commission->addCommission($contract->id, $contract->amount, $contract->employee_id);
+
         return (new ContractResource($contract->load($this->contractRelationsForResource())))
             ->response()
             ->setStatusCode(201);
     }
 
-
     /**
      * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function show(Contract $contract)
     {
+        // Ownership check for own-scoped users
+        $this->authorizeRecordAccess($contract, 'contracts', 'view', 'employee_id');
+
         try {
             return new ContractResource($contract->load($this->contractRelationsForResource()));
         } catch (\Exception $e) {
@@ -147,13 +145,11 @@ class ContractController extends BaseController
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function update(UpdateContractRequest $request, Contract $contract, ContractService $contractService)
     {
+        // Ownership check for own-scoped users
+        $this->authorizeRecordAccess($contract, 'contracts', 'update', 'employee_id');
 
         $contract = $contractService->update(
             $contract,
@@ -162,21 +158,21 @@ class ContractController extends BaseController
 
         $commission = new CommissionService;
         $commission->updateCommission($contract->id, $contract->amount, $contract->employee_id);
+
         return response()->json([
             'message' => 'Contract updated successfully.',
             'data'    => new ContractResource($contract->load($this->contractRelationsForResource()))
         ]);
     }
 
-
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function destroy(Contract $contract)
     {
+        // Ownership check for own-scoped users
+        $this->authorizeRecordAccess($contract, 'contracts', 'delete', 'employee_id');
+
         try {
             $contract->delete();
 
@@ -191,34 +187,34 @@ class ContractController extends BaseController
         }
     }
 
-    /*
-    * Cancel services associated with a contract
-    * manage refund logic if there collections associated with the contract services and set the rest to terminated
-    */
-
+    /**
+     * Cancel a full contract — requires contracts.cancel permission.
+     * Manages refund logic for collections associated with the contract services.
+     */
     public function cancelContract(Contract $contract)
     {
+        // Ownership check: own-scoped users may only cancel their own contracts
+        $this->authorizeRecordAccess($contract, 'contracts', 'update', 'employee_id');
+
         try {
             $contract->update([
-                'status' => 'terminated',
-                'is_terminated' => true,
-                'terminated_date' => now()
+                'status'          => 'terminated',
+                'is_terminated'   => true,
+                'terminated_date' => now(),
             ]);
             $contract->services()->update([
-                'status' => 'cancelled',
+                'status'       => 'cancelled',
                 'is_cancelled' => true,
-                'cancelled_date' => now()
+                'cancelled_date' => now(),
             ]);
 
-            // Handle refund logic for collections associated with the contract's services
             foreach ($contract->services as $service) {
                 foreach ($service->collectionsForContract($contract->id)->get() as $collection) {
                     if ($collection->status === 'pending' || $collection->status === 'partial') {
-                        // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
                         $collection->update([
-                            'status' => 'written_off',
-                            'is_written_off' => true,
-                            'written_off_date' => now()
+                            'status'           => 'written_off',
+                            'is_written_off'   => true,
+                            'written_off_date' => now(),
                         ]);
                     }
                 }
@@ -235,13 +231,19 @@ class ContractController extends BaseController
         }
     }
 
+    /**
+     * Cancel a single service on a contract — requires contracts.cancel permission.
+     */
     public function cancelSingleService(Contract $contract, $service_slug)
     {
+        // Ownership check: own-scoped users may only cancel services on their own contracts
+        $this->authorizeRecordAccess($contract, 'contracts', 'update', 'employee_id');
+
         try {
             $service = $contract->services()->where('slug', $service_slug)->firstOrFail();
 
             // Calculate service total price from pivot
-            $pivot = $service->pivot;
+            $pivot             = $service->pivot;
             $serviceTotalPrice = ($pivot->unit_price * $pivot->quantity) - $pivot->discount;
 
             // Calculate total amount collected for this service
@@ -251,20 +253,18 @@ class ContractController extends BaseController
 
             // Update contract amount: deduct service price, add back any collected amount
             $contract->update([
-                'amount' => $contract->amount - $serviceTotalPrice + $totalCollected,
+                'amount'      => $contract->amount - $serviceTotalPrice + $totalCollected,
                 'amount_paid' => $contract->amount_paid - $totalCollected,
             ]);
 
             $contract->services()->updateExistingPivot($service->id, [
-                'status' => 'cancelled',
-                'is_cancelled' => true,
-                'cancelled_date' => now()
+                'status'         => 'cancelled',
+                'is_cancelled'   => true,
+                'cancelled_date' => now(),
             ]);
 
-            // Handle refund logic for collections associated with the service
             foreach ($service->collectionsForContract($contract->id)->get() as $collection) {
                 if ($collection->status === 'pending' || $collection->status === 'partial') {
-                    // Implement refund logic here (e.g., create a refund record, update collection status, etc.)
                     $collection->update(['status' => 'written_off']);
                 }
             }

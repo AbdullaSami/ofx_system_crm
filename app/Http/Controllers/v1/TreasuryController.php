@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\v1;
 
 use Illuminate\Routing\Controller as BaseController;
-
 use Illuminate\Http\Request;
 use App\Models\TreasuryAccount;
+
 class TreasuryController extends BaseController
 {
-    public function __construct() {
-        $this->middleware('permission:treasury.viewAny')->only('index');
-        $this->middleware('permission:treasury.view')->only('show');
+    public function __construct()
+    {
+        $this->middleware('permission:treasury.view|treasury.view.own')->only('index');
+        $this->middleware('permission:treasury.view|treasury.view.own')->only('show');
         $this->middleware('permission:treasury.create')->only('store');
-        $this->middleware('permission:treasury.update')->only('update');
-        $this->middleware('permission:treasury.delete')->only('destroy');
+        $this->middleware('permission:treasury.update|treasury.update.own')->only('update');
+        $this->middleware('permission:treasury.delete|treasury.delete.own')->only('destroy');
     }
 
     public function index()
@@ -29,7 +30,13 @@ class TreasuryController extends BaseController
     public function store(Request $request)
     {
         try {
-            $treasury = TreasuryAccount::create($request->all());
+            $validated = $request->validate([
+                'account_name' => 'required|string|max:255|unique:treasury_accounts,account_name',
+                'balance'      => 'nullable|numeric|min:0',
+                'currency'     => 'nullable|string|max:10',
+                'description'  => 'nullable|string',
+            ]);
+            $treasury = TreasuryAccount::create($validated);
             return response()->json($treasury, 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
@@ -49,12 +56,18 @@ class TreasuryController extends BaseController
     public function update(Request $request, $id)
     {
         try {
-        $treasury = TreasuryAccount::findOrFail($id);
-        $treasury->update($request->all());
-        return response()->json($treasury);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
-    }
+            $validated = $request->validate([
+                'account_name' => 'sometimes|string|max:255|unique:treasury_accounts,account_name,' . $id,
+                'balance'      => 'sometimes|numeric|min:0',
+                'currency'     => 'nullable|string|max:10',
+                'description'  => 'nullable|string',
+            ]);
+            $treasury = TreasuryAccount::findOrFail($id);
+            $treasury->update($validated);
+            return response()->json($treasury);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function destroy($id)

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -58,5 +59,33 @@ class Collection extends Model
         $contract = Contract::findOrFail($contractId);
 
         return ($total + $amount) > $contract->amount;
+    }
+
+    /**
+     * Scope a query to only include records visible to the given user.
+     *
+     * collections.view      → all collections
+     * collections.view.own  → only collections belonging to the user's employee (via contract)
+     */
+    public function scopeVisibleTo(Builder $query, \App\Models\User $user): Builder
+    {
+        if ($user->can('collections.view')) {
+            return $query;
+        }
+
+        if ($user->can('collections.view.own')) {
+            $employeeId = $user->employee?->id;
+            abort_if(
+                ! $employeeId,
+                403,
+                'Your account has no linked employee record. Contact an administrator.'
+            );
+            return $query->whereHas(
+                'contract',
+                fn ($q) => $q->where('employee_id', $employeeId)
+            );
+        }
+
+        abort(403, 'You do not have permission to view collections.');
     }
 }

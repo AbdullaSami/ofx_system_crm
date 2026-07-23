@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -55,5 +56,30 @@ class Client extends Model
     public function collections(): HasMany
     {
         return $this->hasMany(Collection::class, 'client_id');
+    }
+
+    /**
+     * Scope a query to only include records visible to the given user.
+     *
+     * clients.view      → all clients
+     * clients.view.own  → only clients assigned to the user's employee
+     */
+    public function scopeVisibleTo(Builder $query, \App\Models\User $user): Builder
+    {
+        if ($user->can('clients.view')) {
+            return $query;
+        }
+
+        if ($user->can('clients.view.own')) {
+            $employeeId = $user->employee?->id;
+            abort_if(
+                ! $employeeId,
+                403,
+                'Your account has no linked employee record. Contact an administrator.'
+            );
+            return $query->where('assigned_to', $employeeId);
+        }
+
+        abort(403, 'You do not have permission to view clients.');
     }
 }

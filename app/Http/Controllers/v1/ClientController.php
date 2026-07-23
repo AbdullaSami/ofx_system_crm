@@ -5,35 +5,38 @@ namespace App\Http\Controllers\v1;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Http\Concerns\AuthorizesScope;
+
 class ClientController extends BaseController
 {
+    use AuthorizesScope;
 
-    public function __construct() {
-        $this->middleware('permission:clients.viewAny')->only('index');
-        $this->middleware('permission:clients.view')->only('show');
+    public function __construct()
+    {
+        $this->middleware('permission:clients.view|clients.view.own')->only('index');
+        $this->middleware('permission:clients.view|clients.view.own')->only('show');
         $this->middleware('permission:clients.create')->only('store');
-        $this->middleware('permission:clients.update')->only('update');
-        $this->middleware('permission:clients.delete')->only('destroy');
+        $this->middleware('permission:clients.update|clients.update.own')->only('update');
+        $this->middleware('permission:clients.delete|clients.delete.own')->only('destroy');
     }
-
 
     public function index(Request $request)
     {
         $search = $request->query('search');
         try {
-        $clients = Client::query()
-            ->when($search, function ($query, $search) {
-                $query->where('client_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('whatsapp', 'like', "%{$search}%")
-                    ->orWhere('assigned_to', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%");
+            $clients = Client::query()
+                ->visibleTo(auth()->user())  // Data-scope based on permission
+                ->when($search, function ($query, $search) {
+                    $query->where('client_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('whatsapp', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%");
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
 
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        return response()->json($clients);
+            return response()->json($clients);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch clients', 'message' => $e->getMessage()], 500);
         }
@@ -43,6 +46,10 @@ class ClientController extends BaseController
     {
         try {
             $client = Client::with(['lead', 'assignedTo', 'contracts.collections', 'contracts.services', 'contracts.layoutAnswers'])->findOrFail($id);
+
+            // Ownership check: own-scoped users may only view their own clients
+            $this->authorizeRecordAccess($client, 'clients', 'view', 'assigned_to');
+
             return response()->json($client);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch client', 'message' => $e->getMessage()], 500);
@@ -53,19 +60,19 @@ class ClientController extends BaseController
     {
         $validatedData = $request->validate([
             'client_name' => 'required|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'whatsapp' => 'nullable|string|max:20',
-            'company' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:active,inactive,archived',
-            'lead_id' => 'nullable|exists:leads,id',
+            'first_name'  => 'nullable|string|max:255',
+            'last_name'   => 'nullable|string|max:255',
+            'email'       => 'nullable|email|max:255',
+            'phone'       => 'nullable|string|max:20',
+            'whatsapp'    => 'nullable|string|max:20',
+            'company'     => 'nullable|string|max:255',
+            'status'      => 'nullable|string|in:active,inactive,archived',
+            'lead_id'     => 'nullable|exists:leads,id',
             'assigned_to' => 'nullable|exists:employees,id',
-            'user_id' => 'nullable|exists:users,id',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
+            'user_id'     => 'nullable|exists:users,id',
+            'address'     => 'nullable|string|max:255',
+            'city'        => 'nullable|string|max:255',
+            'country'     => 'nullable|string|max:255',
         ]);
 
         try {
@@ -80,23 +87,27 @@ class ClientController extends BaseController
     {
         $validatedData = $request->validate([
             'client_name' => 'required|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'whatsapp' => 'nullable|string|max:20',
-            'company' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:active,inactive,archived',
-            'lead_id' => 'nullable|exists:leads,id',
+            'first_name'  => 'nullable|string|max:255',
+            'last_name'   => 'nullable|string|max:255',
+            'email'       => 'nullable|email|max:255',
+            'phone'       => 'nullable|string|max:20',
+            'whatsapp'    => 'nullable|string|max:20',
+            'company'     => 'nullable|string|max:255',
+            'status'      => 'nullable|string|in:active,inactive,archived',
+            'lead_id'     => 'nullable|exists:leads,id',
             'assigned_to' => 'nullable|exists:employees,id',
-            'user_id' => 'nullable|exists:users,id',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
+            'user_id'     => 'nullable|exists:users,id',
+            'address'     => 'nullable|string|max:255',
+            'city'        => 'nullable|string|max:255',
+            'country'     => 'nullable|string|max:255',
         ]);
 
         try {
             $client = Client::findOrFail($id);
+
+            // Ownership check: own-scoped users may only update their own clients
+            $this->authorizeRecordAccess($client, 'clients', 'update', 'assigned_to');
+
             $client->update($validatedData);
             return response()->json($client);
         } catch (\Exception $e) {
@@ -108,6 +119,10 @@ class ClientController extends BaseController
     {
         try {
             $client = Client::findOrFail($id);
+
+            // Ownership check: own-scoped users may only delete their own clients
+            $this->authorizeRecordAccess($client, 'clients', 'delete', 'assigned_to');
+
             $client->delete();
             return response()->json(['message' => 'Client deleted successfully']);
         } catch (\Exception $e) {

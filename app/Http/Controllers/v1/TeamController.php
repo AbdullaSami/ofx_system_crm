@@ -10,11 +10,11 @@ use Illuminate\Http\Request;
 class TeamController extends BaseController
 {
     public function __construct() {
-        $this->middleware('permission:teams.viewAny')->only('index');
-        $this->middleware('permission:teams.view')->only('show');
+        $this->middleware('permission:teams.view|teams.view.own')->only('index');
+        $this->middleware('permission:teams.view|teams.view.own')->only('show');
         $this->middleware('permission:teams.create')->only('store');
-        $this->middleware('permission:teams.update')->only('update');
-        $this->middleware('permission:teams.delete')->only('destroy');
+        $this->middleware('permission:teams.update|teams.update.own')->only('update');
+        $this->middleware('permission:teams.delete|teams.delete.own')->only('destroy');
     }
 
     public function index()

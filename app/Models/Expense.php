@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,5 +52,24 @@ class Expense extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Scope a query to only include records visible to the given user.
+     *
+     * expenses.view      → all expenses
+     * expenses.view.own  → only expenses created by the authenticated user
+     */
+    public function scopeVisibleTo(Builder $query, \App\Models\User $user): Builder
+    {
+        if ($user->can('expenses.view')) {
+            return $query;
+        }
+
+        if ($user->can('expenses.view.own')) {
+            return $query->where('created_by', $user->id);
+        }
+
+        abort(403, 'You do not have permission to view expenses.');
     }
 }
