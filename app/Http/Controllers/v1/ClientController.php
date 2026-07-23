@@ -31,6 +31,7 @@ class ClientController extends BaseController
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%")
                         ->orWhere('whatsapp', 'like', "%{$search}%")
+                        ->orWhere('company', 'like', "%{$search}%")
                         ->orWhere('status', 'like', "%{$search}%");
                 })
                 ->orderBy('created_at', 'desc')
