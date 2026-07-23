@@ -28,11 +28,11 @@ class DepartmentController extends BaseController
                 return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
             }
 
-            $departmentId = $employee->department_id;
             
             if ($user->can('departments.view')) {
                 $departments = Department::all();
             } else {
+                $departmentId = $employee->department_id;
                 $departments = Department::where('id', $departmentId)->get();
             }
             return response()->json($departments);
