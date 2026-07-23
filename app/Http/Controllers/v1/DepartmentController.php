@@ -18,28 +18,35 @@ class DepartmentController extends BaseController
         $this->middleware('permission:departments.delete|departments.delete.own')->only('destroy');
     }
 
-    public function index()
-    {
-        try {
-            $user = auth()->user();
-            $employee = Employee::where('user_id', $user->id)->first();
+public function index()
+{
+    try {
+        $user = auth()->user();
 
-            if(!$employee && !$user->can('departments.view')){
-                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
-            }
-
-            
-            if ($user->can('departments.view')) {
-                $departments = Department::all();
-            } else {
-                $departmentId = $employee->department_id;
-                $departments = Department::where('id', $departmentId)->get();
-            }
-            return response()->json($departments);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
+        // User can view all departments
+        if ($user->can('departments.view')) {
+            return response()->json(Department::all());
         }
+
+        $employee = Employee::firstWhere('user_id', $user->id);
+
+        if (!$employee) {
+            return response()->json([
+                'message' => 'Your account is not linked to any department.'
+            ], 403);
+        }
+
+        return response()->json(
+            Department::whereKey($employee->department_id)->get()
+        );
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => 'An error occurred.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     public function store(Request $request)
     {
