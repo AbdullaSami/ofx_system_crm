@@ -26,7 +26,6 @@ class UserController extends BaseController
     public function index(Request $request)
     {
         $authUser = auth()->user();
-
         $query = User::query()->with(['roles.permissions', 'permissions']);
 
         // Data scoping: if user only has users.view.own, return only their own user account

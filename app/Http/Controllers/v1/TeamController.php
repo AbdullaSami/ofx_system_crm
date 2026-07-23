@@ -20,8 +20,20 @@ class TeamController extends BaseController
     public function index()
     {
         try {
-            $teams = Team::with('services')->get();
+            $user = auth()->user();
+            $employee = Employee::where('user_id', $user->id)->first();
 
+            if (!$employee) {
+                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
+            }
+
+            $departmentId = $employee->department_id;
+
+            if ($user->can('teams.view')) {
+                $teams = Team::with('services')->get();
+            } else {
+                $teams = $employee->teams()->with('services')->get();
+            }
             return response()->json($teams);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);

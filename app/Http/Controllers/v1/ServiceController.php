@@ -23,9 +23,20 @@ class ServiceController extends BaseController
     public function index()
     {
         try {
-            $services = Service::with(['department'])->get();
+            $user = auth()->user();
+            $employee = Employee::where('user_id', $user->id)->first();
 
+            if (!$employee) {
+                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
+            }
 
+            $departmentId = $employee->department_id;
+
+            if ($user->can('services.view')) {
+                $services = Service::with(['department'])->get();
+            } else {
+                $services = Service::with(['department'])->where('department_id', $departmentId)->get();
+            }
             return response()->json(
                 $services->map(function ($service) {
                     $arr = $service->toArray();

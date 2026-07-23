@@ -10,11 +10,11 @@ class TreasuryController extends BaseController
 {
     public function __construct()
     {
-        $this->middleware('permission:treasury.view|treasury.view.own')->only('index');
-        $this->middleware('permission:treasury.view|treasury.view.own')->only('show');
+        $this->middleware('permission:treasury.view')->only('index');
+        $this->middleware('permission:treasury.view')->only('show');
         $this->middleware('permission:treasury.create')->only('store');
-        $this->middleware('permission:treasury.update|treasury.update.own')->only('update');
-        $this->middleware('permission:treasury.delete|treasury.delete.own')->only('destroy');
+        $this->middleware('permission:treasury.update')->only('update');
+        $this->middleware('permission:treasury.delete')->only('destroy');
     }
 
     public function index()

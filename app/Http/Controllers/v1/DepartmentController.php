@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1;
 
 use App\Models\Department;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 
@@ -20,7 +21,20 @@ class DepartmentController extends BaseController
     public function index()
     {
         try {
-            $departments = Department::all();
+            $user = auth()->user();
+            $employee = Employee::where('user_id', $user->id)->first();
+
+            if(!$employee){
+                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
+            }
+
+            $departmentId = $employee->department_id;
+            
+            if ($user->can('departments.view')) {
+                $departments = Department::all();
+            } else {
+                $departments = Department::where('id', $departmentId)->get();
+            }
             return response()->json($departments);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
@@ -44,7 +58,20 @@ class DepartmentController extends BaseController
     public function show($department)
     {
         try {
-            $department = Department::with(['services', 'teams', 'servicesViaTeams'])->where('slug', $department)->first();
+            $user = auth()->user();
+            $employee = Employee::where('user_id', $user->id)->first();
+
+            if(!$employee){
+                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
+            }
+
+            $departmentId = $employee->department_id;
+            
+            if ($user->can('departments.view')) {
+                $department = Department::with(['services', 'teams', 'servicesViaTeams'])->where('slug', $department)->first();
+            } else {
+                $department = Department::with(['services', 'teams', 'servicesViaTeams'])->where('id', $departmentId)->first();
+            }
             return response()->json($department);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
