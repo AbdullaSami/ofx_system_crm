@@ -24,7 +24,7 @@ class DepartmentController extends BaseController
             $user = auth()->user();
             $employee = Employee::where('user_id', $user->id)->first();
 
-            if(!$employee){
+            if(!$employee && !$user->can('departments.view')){
                 return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
             }
 
