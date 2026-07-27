@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 ];
             }),
             'permissions' => $user->getAllPermissions()->pluck('name'),
+            'employee' => $user->employee
         ];
     });
     Route::post('/logout', [AuthController::class, 'logout']);
