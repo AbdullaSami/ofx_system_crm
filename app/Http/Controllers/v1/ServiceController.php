@@ -28,7 +28,6 @@ class ServiceController extends BaseController
             $employee = Employee::where('user_id', $user->id)->first();
 
 
-            $departmentId = $employee->department_id;
 
             if ($user->can('services.view')) {
                 $services = Service::with(['department'])->get();
@@ -36,6 +35,7 @@ class ServiceController extends BaseController
                 if (!$employee) {
                     return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
                 }
+                $departmentId = $employee->department_id;
                 $services = Service::with(['department'])->where('department_id', $departmentId)->get();
             }
             return response()->json(
