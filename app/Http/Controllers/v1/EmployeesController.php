@@ -308,7 +308,7 @@ class EmployeesController extends BaseContoller
             ]);
 
             $expenseService = new ExpenseService();
-            $treasuryId = TreasuryAccount::where('name', $validatedData['payment_method'])->first()?->id;
+            $treasuryId = TreasuryAccount::where('account_name', $validatedData['payment_method'])->first()?->id;
             $expenseService->create([
                 'treasury_id' => $treasuryId,
                 'expense_type' => Expense::TYPE_WAGE,

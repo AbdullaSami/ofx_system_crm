@@ -6,7 +6,7 @@ use Illuminate\Routing\Controller as BaseController;
 use App\Models\Service;
 use App\Models\Team;
 use Illuminate\Http\Request;
-
+use App\Models\Employee;
 class TeamController extends BaseController
 {
     public function __construct() {
