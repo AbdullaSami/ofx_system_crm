@@ -32,6 +32,7 @@ class ReportsService
             'payment_method_comparison' => $this->getPaymentMethodComparison($filters),
             'advertisement_spending'    => $this->getAdvertisementSpending($filters),
             'service_comparison' => $this->getServiceComparison($filters),
+            'contract_status_breakdown' => $this->getContractStatusBreakdown($filters),
         ];
     }
 
@@ -496,6 +497,45 @@ class ReportsService
             ->toArray();
     }
 
+    /**
+     * Report 14: Contract Status Breakdown.
+     */
+    protected function getContractStatusBreakdown(array $filters): array
+    {
+        $contractsQuery = Contract::query();
+        $this->applyContractFilters($contractsQuery, $filters);
+
+        $statuses = ['draft', 'active', 'expired', 'terminated', 'renewed'];
+
+        $results = $contractsQuery
+            ->select(
+                'status',
+                DB::raw('COUNT(id) as number_of_contracts'),
+                DB::raw('SUM(amount) as total_revenue')
+            )
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $totalContracts = $results->sum('number_of_contracts');
+
+        $breakdown = [];
+        foreach ($statuses as $status) {
+            $row = $results->get($status);
+            $count = $row ? (int) $row->number_of_contracts : 0;
+
+            $breakdown[] = [
+                'status' => $status,
+                'number_of_contracts' => $count,
+                'total_revenue' => $row ? round((float) $row->total_revenue, 2) : 0.0,
+                'percentage_of_total' => $totalContracts > 0
+                    ? round(($count / $totalContracts) * 100, 2)
+                    : 0.0,
+            ];
+        }
+
+        return $breakdown;
+    }
     /**
      * Apply common query filters to a Contract query builder instance.
      */
