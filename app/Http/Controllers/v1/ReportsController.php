@@ -42,7 +42,7 @@ class ReportsController extends BaseController
         $user = auth()->user();
 
         // Scope non-global viewers to their own data only
-        if ($user && ! $user->can('reports.view')) {
+        if ($user && !$user->can('reports.view')) {
             if ($user->can('reports.view.own')) {
                 $employeeId = $user->getEmployeeId();
                 $validated['sales_representative'] = $employeeId ?: 0;
