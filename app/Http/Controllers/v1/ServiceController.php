@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\DB;
 use App\Models\Employee;
+
 class ServiceController extends BaseController
 {
 
@@ -26,15 +27,15 @@ class ServiceController extends BaseController
             $user = auth()->user();
             $employee = Employee::where('user_id', $user->id)->first();
 
-            if (!$employee) {
-                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
-            }
 
             $departmentId = $employee->department_id;
 
             if ($user->can('services.view')) {
                 $services = Service::with(['department'])->get();
             } else {
+                if (!$employee) {
+                    return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
+                }
                 $services = Service::with(['department'])->where('department_id', $departmentId)->get();
             }
             return response()->json(
@@ -252,7 +253,6 @@ class ServiceController extends BaseController
                     'layouts.layoutFields',
                 ]),
             ]);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
 
             DB::rollBack();
@@ -260,7 +260,6 @@ class ServiceController extends BaseController
             return response()->json([
                 'message' => 'Service not found',
             ], 404);
-
         } catch (\Throwable $e) {
 
             DB::rollBack();

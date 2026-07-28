@@ -7,9 +7,11 @@ use App\Models\Service;
 use App\Models\Team;
 use Illuminate\Http\Request;
 use App\Models\Employee;
+
 class TeamController extends BaseController
 {
-    public function __construct() {
+    public function __construct()
+    {
         $this->middleware('permission:teams.view|teams.view.own')->only('index');
         $this->middleware('permission:teams.view|teams.view.own')->only('show');
         $this->middleware('permission:teams.create')->only('store');
@@ -23,15 +25,15 @@ class TeamController extends BaseController
             $user = auth()->user();
             $employee = Employee::where('user_id', $user->id)->first();
 
-            if (!$employee) {
-                return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
-            }
 
             $departmentId = $employee->department_id;
 
             if ($user->can('teams.view')) {
                 $teams = Team::with('services')->get();
             } else {
+                if (!$employee) {
+                    return response()->json(['message' => 'Your role is not under any department', 'error' => 'Employee not found'], 200);
+                }
                 $teams = $employee->teams()->with('services')->get();
             }
             return response()->json($teams);
@@ -102,7 +104,6 @@ class TeamController extends BaseController
             }
 
             return response()->json($team->load('services'), 200);
-
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
