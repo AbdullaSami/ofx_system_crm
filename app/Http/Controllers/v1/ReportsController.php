@@ -45,7 +45,12 @@ class ReportsController extends BaseController
         if ($user && !$user->can('reports.view')) {
             if ($user->can('reports.view.own')) {
                 $employeeId = $user->getEmployeeId();
-                $validated['sales_representative'] = $employeeId ?: 0;
+
+                if (!$employeeId) {
+                    abort(403, 'No employee record linked to this account.');
+                }
+
+                $validated['sales_representative'] = $employeeId;
             } else {
                 abort(403, 'You do not have permission to view reports.');
             }
