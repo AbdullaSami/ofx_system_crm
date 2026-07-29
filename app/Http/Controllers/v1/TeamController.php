@@ -26,8 +26,6 @@ class TeamController extends BaseController
             $employee = Employee::where('user_id', $user->id)->first();
 
 
-            $departmentId = $employee->department_id;
-
             if ($user->can('teams.view')) {
                 $teams = Team::with('services')->get();
             } else {
