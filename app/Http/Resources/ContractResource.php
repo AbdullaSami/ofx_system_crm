@@ -28,6 +28,7 @@ class ContractResource extends JsonResource
             'refund_date'           => $this->refund_date,
             'refund_amount'           => $this->refund_amount,
             'created_at'      => $this->created_at?->toDateTimeString(),
+            'notes' => $this->notes,
 
             'client'          => $this->client->client_name ?? null,
             'company'          => $this->client->company ?? null,
