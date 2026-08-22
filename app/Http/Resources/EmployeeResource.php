@@ -24,7 +24,6 @@ class EmployeeResource extends JsonResource
             'whatsapp' => $this->whatsapp,
             'status' => $this->status,
             'role' => $this->position,
-            'salaryAdvances' => $this->salaryAdvances,
             'salary' => $this->salary ? $this->salary->map(function ($salary) {
                 return [
                     'amount' => $salary->amount,
@@ -55,6 +54,15 @@ class EmployeeResource extends JsonResource
                     'status' => $contract->status,
                 ];
             }) : null,
+            'salaryAdvances' => $this->salaryAdvances ? $this->salaryAdvances->map(function ($advance) {
+                return [
+                    'amount' => $advance->amount,
+                    'currency' => $advance->currency,
+                    'effective_date' => $advance->effective_date,
+                    'status' => $advance->status,
+                ];
+            }) : null,
+            'salaryAdvancesTotal' => $this->salaryAdvances ? $this->salaryAdvances->where('is_settled', true)->sum('amount') : 0,
             'commission' => $this->commission ? $this->commission->map(function ($commission) {
                 return [
                     'total_contracts_value' => $commission->total_contracts_value,
