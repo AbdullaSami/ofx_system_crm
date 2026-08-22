@@ -24,6 +24,7 @@ class EmployeeResource extends JsonResource
             'whatsapp' => $this->whatsapp,
             'status' => $this->status,
             'role' => $this->position,
+            'salaryAdvances' => $this->salaryAdvances,
             'salary' => $this->salary ? $this->salary->map(function ($salary) {
                 return [
                     'amount' => $salary->amount,

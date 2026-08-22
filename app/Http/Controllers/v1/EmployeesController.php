@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use Illuminate\Routing\Controller as BaseContoller;
+use Illuminate\Routing\Controller as BaseController;
 use App\Http\Services\ExpenseService;
 use App\Models\Employee;
 use App\Models\EmployeeCommission;
@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Resources\EmployeeResource;
 use App\Models\Expense;
 use App\Models\TreasuryAccount;
+use App\Http\Services\TreasuryAccountingService;
 
-class EmployeesController extends BaseContoller
+class EmployeesController extends BaseController
 {
 
     public function __construct()
@@ -32,7 +33,7 @@ class EmployeesController extends BaseContoller
     {
         $user = auth()->user();
         if ($user->can('employees.view')) {
-            $employees = Employee::with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
+            $employees = Employee::with(['salary', 'salaries', 'salaryAdvances','commissions', 'commission', 'contracts'])->get();
         } else {
             $employees = Employee::where('user_id', $user->id)->with(['salary', 'salaries', 'commissions', 'commission', 'contracts'])->get();
         }
@@ -44,7 +45,7 @@ class EmployeesController extends BaseContoller
         $employee = Employee::with([
             'salary',
             'salaries',
-
+            'salaryAdvances',
             'contracts' => function ($query) use ($request) {
 
                 if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -283,45 +284,116 @@ class EmployeesController extends BaseContoller
         return response()->json(['message' => 'Employee deleted successfully'], 200);
     }
 
+    /**
+     * Pay salary — now auto-deducts any active/unsettled salary advances,
+     * locks treasury row to prevent race conditions, and validates balance
+     * before creating the expense (old code created expense with no balance check).
+     */
     public function paySalary(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
 
         $validatedData = $request->validate([
-            'amount' => 'required|numeric',
-            'bonus' => 'nullable|numeric',
-            'deductions' => 'nullable|numeric',
-            'payment_method' => 'nullable|string|max:50',
-            'status' => 'nullable|in:pending,approved,paid',
+            'amount'          => 'required|numeric',
+            'bonus'           => 'nullable|numeric',
+            'deductions'      => 'nullable|numeric',
+            'payment_method'  => 'nullable|string|max:50',
+            'status'          => 'nullable|in:pending,approved,paid',
         ]);
 
         try {
-            DB::beginTransaction();
-            $employee->salaries()->create([
-                'amount' => $validatedData['amount'],
-                'currency' => 'EGP',
-                'bonus' => $validatedData['bonus'] ?? 0,
-                'deductions' => $validatedData['deductions'] ?? 0,
-                'payment_method' => $validatedData['payment_method'] ?? null,
-                'effective_date' => now(),
-                'status' => $validatedData['status'] ?? 'paid',
-            ]);
+            $result = DB::transaction(function () use ($validatedData, $employee) {
 
-            $expenseService = new ExpenseService();
-            $treasuryId = TreasuryAccount::where('account_name', $validatedData['payment_method'])->first()?->id;
-            $expenseService->create([
-                'treasury_id' => $treasuryId,
-                'expense_type' => Expense::TYPE_WAGE,
-                'expensable_type' => Employee::class,
-                'expensable_id' => $employee->id,
-                'amount' => $validatedData['amount'] + ($validatedData['bonus'] ?? 0) - ($validatedData['deductions'] ?? 0),
-                'expense_date' => now(),
-                'description' => 'Pay Salary for employee: ' . $employee->employee_name,
-            ]);
-            DB::commit();
-            return response()->json(['message' => 'Salary paid successfully'], 200);
+                // pull active advances for this employee that still have a remaining balance
+                $activeAdvances = $employee->salaryAdvances()
+                    ->where('is_settled', false)
+                    ->lockForUpdate() // lock rows so two payroll runs can't double-deduct same advance
+                    ->get();
+
+                $advanceDeduction = $activeAdvances->sum('amount'); // simple version: full remaining amount deducted this run
+                // NOTE: if you use installment-based advances (from earlier schema),
+                // replace this with sum of "due this cycle" installment amounts instead.
+
+                $manualDeductions = $validatedData['deductions'] ?? 0;
+                $bonus            = $validatedData['bonus'] ?? 0;
+
+                // total deductions now includes salary advance repayment
+                $totalDeductions = $manualDeductions + $advanceDeduction;
+
+                $netAmount = $validatedData['amount'] + $bonus - $totalDeductions;
+
+                if ($netAmount < 0) {
+                    throw new \RuntimeException('Net salary is negative after advance deductions — check advance amount vs salary.');
+                }
+
+                // lock treasury account BEFORE checking balance (old code checked after fetch = race condition)
+                $treasuryAccount = TreasuryAccount::where('account_name', $validatedData['payment_method'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$treasuryAccount) {
+                    throw new \RuntimeException('Treasury account not found');
+                }
+
+                if ($treasuryAccount->balance < $netAmount) {
+                    throw new \RuntimeException('Insufficient balance in treasury account');
+                }
+
+                // create the salary record, storing advance_deduction separately so it's auditable
+                $salary = $employee->salaries()->create([
+                    'amount'            => $validatedData['amount'],
+                    'currency'          => 'EGP',
+                    'bonus'             => $bonus,
+                    'deductions'        => $manualDeductions,
+                    'advance_deduction' => $advanceDeduction, // add this column via migration
+                    'payment_method'    => $validatedData['payment_method'] ?? null,
+                    'effective_date'    => now(),
+                    'status'            => $validatedData['status'] ?? 'paid',
+                ]);
+
+                // mark advances as settled + link back to this salary payment
+                foreach ($activeAdvances as $advance) {
+                    $advance->update([
+                        'is_settled'   => true,
+                        'settled_date' => now(),
+                        'salary_id'    => $salary->id, // add this column via migration, for traceability
+                    ]);
+                }
+
+                // record the actual treasury debit (this was missing before — old code never
+                // touched TreasuryAccountingService, only created an Expense, so balance never moved)
+                $treasuryService = new TreasuryAccountingService();
+                $treasuryService->recordTransaction(
+                    $treasuryAccount->id,
+                    $netAmount,
+                    'debit',
+                    'Salary Payment for: ' . $employee->employee_name
+                );
+
+                // log the expense (net amount already reflects advance deduction, so no double counting)
+                $expenseService = new ExpenseService();
+                $expenseService->create([
+                    'treasury_id'     => $treasuryAccount->id,
+                    'expense_type'    => Expense::TYPE_WAGE,
+                    'expensable_type' => Employee::class,
+                    'expensable_id'   => $employee->id,
+                    'amount'          => $netAmount,
+                    'expense_date'    => now(),
+                    'description'     => 'Pay Salary for employee: ' . $employee->employee_name
+                        . ($advanceDeduction > 0 ? ' (incl. advance deduction: ' . $advanceDeduction . ')' : ''),
+                ]);
+
+                return $salary;
+            });
+
+            return response()->json([
+                'message' => 'Salary paid successfully',
+                'salary'  => $result,
+            ], 200);
+        } catch (\RuntimeException $e) {
+            // expected business errors (no account / insufficient balance / negative net)
+            return response()->json(['message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json(['message' => 'Failed to pay salary', 'error' => $e->getMessage()], 500);
         }
     }

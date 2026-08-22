@@ -13,6 +13,11 @@ class TreasuryTransaction extends Model
         'description',
     ];
 
+    public function salaryAvance()
+    {
+        return $this->hasOne(SalaryAdvance::class, 'treasury_transaction_id');
+    }
+
     public function treasuryAccount()
     {
         return $this->belongsTo(TreasuryAccount::class);
