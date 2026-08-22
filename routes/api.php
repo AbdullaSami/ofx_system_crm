@@ -16,6 +16,7 @@ use App\Http\Controllers\v1\TreasuryController;
 use App\Http\Controllers\v1\ExpenseController;
 use App\Http\Controllers\v1\ReportsController;
 use App\Http\Controllers\v1\UserController;
+use App\Http\Controllers\v1\SalaryAdvanceController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -67,4 +68,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('expenses.attachments.destroy');
 
     Route::get('reports/dashboard', [ReportsController::class, 'dashboard']);
+
+    Route::apiResource('salary-advance', SalaryAdvanceController::class);
 });
