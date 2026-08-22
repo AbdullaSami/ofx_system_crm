@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('salary_aadvances', function (Blueprint $table) {
+        Schema::create('salary_advances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->foreignId('treasury_transaction_id')->nullable()->constrained('treasury_transactions')->onDelete('set null');
