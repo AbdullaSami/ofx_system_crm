@@ -122,7 +122,7 @@ class ContractService
                 }
 
                 $expenseService = new ExpenseService();
-                $treasuryId = TreasuryAccount::where('name', $contract->payment_method)->first()?->id;
+                $treasuryId = TreasuryAccount::where('account_name', $contract->payment_method)->first()?->id;
                 // Create an expense record for the refund
                 if (isset($data['account_name']) && $data['refund_amount'] > 0) {
                     $expenseService->create([
