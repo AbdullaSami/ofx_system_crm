@@ -83,7 +83,7 @@ class ExpenseService
         return DB::transaction(function () use ($data, $files) {
             $treasury = TreasuryAccount::lockForUpdate()->findOrFail($data['treasury_id']);
 
-            if ($treasury->balance < $data['amount']) {
+            if ($treasury->balance < $data['amount'] && $data['expense_type'] != Expense::TYPE_WAGE) {
                 throw ValidationException::withMessages([
                     'amount' => 'Treasury balance is insufficient for this expense.',
                 ]);
