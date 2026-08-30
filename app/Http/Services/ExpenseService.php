@@ -102,7 +102,9 @@ class ExpenseService
                 'created_by' => $data['created_by'] ?? null,
             ]);
 
-            $treasury->decrement('balance', $data['amount']);
+            if ($expense->expense_type != Expense::TYPE_WAGE) {
+                $treasury->decrement('balance', $data['amount']);
+            }
 
             $this->storeAttachments($expense, $files);
 
