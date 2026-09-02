@@ -45,7 +45,7 @@ class EmployeeResource extends JsonResource
                 return [
                     'id' => $contract->id,
                     'client_name' => $contract->client ? $contract->client->client_name : null,
-                    'client_company' => $contract->client ? $contract->client->client_company : null,
+                    'client_company' => $contract->client ? $contract->client->company : null,
                     'value' => $contract->amount,
                     'is_terminated' => $contract->is_terminated,
                     'terminated_date' => $contract->terminated_date,
