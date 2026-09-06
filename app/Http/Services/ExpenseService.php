@@ -63,15 +63,36 @@ class ExpenseService
             $query->where('expense_type', $filters['expense_type']);
         }
 
-        if (!empty($filters['from'])) {
-            $query->whereDate('expense_date', '>=', $filters['from']);
+        $fromDate = $filters['from_date'] ?? $filters['from'] ?? null;
+        if (!empty($fromDate)) {
+            $query->whereDate('expense_date', '>=', $fromDate);
         }
 
-        if (!empty($filters['to'])) {
-            $query->whereDate('expense_date', '<=', $filters['to']);
+        $toDate = $filters['to_date'] ?? $filters['to'] ?? null;
+        if (!empty($toDate)) {
+            $query->whereDate('expense_date', '<=', $toDate);
         }
 
-        return $query->latest('expense_date')->paginate($filters['per_page'] ?? 15);
+        if (isset($filters['amount']) && $filters['amount'] !== null && $filters['amount'] !== '') {
+            $query->where('amount', $filters['amount']);
+        }
+
+        if (isset($filters['min_amount']) && $filters['min_amount'] !== null && $filters['min_amount'] !== '') {
+            $query->where('amount', '>=', $filters['min_amount']);
+        }
+
+        if (isset($filters['max_amount']) && $filters['max_amount'] !== null && $filters['max_amount'] !== '') {
+            $query->where('amount', '<=', $filters['max_amount']);
+        }
+
+        $totalExpenses = (float) (clone $query)->sum('amount');
+
+        $paginated = (clone $query)->latest('expense_date')->paginate($filters['per_page'] ?? 15);
+
+        return [
+            'expenses'       => $paginated,
+            'total_expenses' => round($totalExpenses, 2),
+        ];
     }
 
     /**

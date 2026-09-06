@@ -36,7 +36,7 @@ class ReportsController extends BaseController
             'month'                => 'nullable|integer|min:1|max:12',
             'sales_representative' => 'nullable|integer|exists:employees,id',
             'customer'             => 'nullable|integer|exists:clients,id',
-            'service'              => 'nullable|string|exists:services,slug',
+            'service'              => 'nullable|string',
         ]);
 
         $user = auth()->user();
@@ -59,7 +59,7 @@ class ReportsController extends BaseController
         try {
             $data = $this->reportsService->getDashboardData($validated);
 
-            return response()->json(new ReportsResource($data));
+            return (new ReportsResource($data))->response();
         } catch (\Exception $e) {
             return response()->json([
                 'error'   => 'Failed to retrieve reports',

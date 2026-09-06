@@ -31,8 +31,9 @@ class ReportsService
             'collected_amount'          => $this->getCollectedAmount($filters),
             'payment_method_comparison' => $this->getPaymentMethodComparison($filters),
             'advertisement_spending'    => $this->getAdvertisementSpending($filters),
-            'service_comparison' => $this->getServiceComparison($filters),
+            'service_comparison'        => $this->getServiceComparison($filters),
             'contract_status_breakdown' => $this->getContractStatusBreakdown($filters),
+            'expenses'                  => $this->getTreasuryExpenses($filters),
         ];
     }
 
@@ -154,7 +155,7 @@ class ReportsService
             ->select(
                 DB::raw("{$monthRaw} as month_label"),
                 DB::raw('COUNT(id) as number_of_contracts'),
-                DB::raw('SUM(amount) as total_revenue')
+                DB::raw('SUM(amount_paid) as total_revenue')
             )
             ->groupBy(DB::raw($monthRaw))
             ->orderBy(DB::raw($monthRaw), 'desc')
@@ -565,9 +566,10 @@ class ReportsService
             $q->where('client_id', $clientId);
         });
 
-        $query->when($filters['service'] ?? null, function ($q, $serviceId) {
-            $q->whereHas('services', function ($sub) use ($serviceId) {
-                $sub->where('services.slug', $serviceId);
+        $query->when($filters['service'] ?? null, function ($q, $serviceVal) {
+            $q->whereHas('services', function ($sub) use ($serviceVal) {
+                $sub->where('services.slug', $serviceVal)
+                    ->orWhere('services.id', $serviceVal);
             });
         });
     }
@@ -603,9 +605,10 @@ class ReportsService
             });
         });
 
-        $query->when($filters['service'] ?? null, function ($q, $serviceId) {
-            $q->whereHas('services', function ($sub) use ($serviceId) {
-                $sub->where('services.slug', $serviceId);
+        $query->when($filters['service'] ?? null, function ($q, $serviceVal) {
+            $q->whereHas('services', function ($sub) use ($serviceVal) {
+                $sub->where('services.slug', $serviceVal)
+                    ->orWhere('services.id', $serviceVal);
             });
         });
     }
@@ -641,10 +644,53 @@ class ReportsService
             $q->where('client_id', $clientId);
         });
 
-        $query->when($filters['service'] ?? null, function ($q, $serviceId) {
-            $q->whereHas('contract.services', function ($sub) use ($serviceId) {
-                $sub->where('services.slug', $serviceId);
+        $query->when($filters['service'] ?? null, function ($q, $serviceVal) {
+            $q->whereHas('contract.services', function ($sub) use ($serviceVal) {
+                $sub->where('services.slug', $serviceVal)
+                    ->orWhere('services.id', $serviceVal);
             });
         });
+    }
+
+    /**
+     * Report 15: Total Expenses Per Treasury.
+     */
+    protected function getTreasuryExpenses(array $filters): array
+    {
+        $expensesQuery = Expense::query();
+
+        $expensesQuery->when($filters['from_date'] ?? null, function ($q, $from) {
+            $q->whereDate('expenses.expense_date', '>=', $from);
+        });
+
+        $expensesQuery->when($filters['to_date'] ?? null, function ($q, $to) {
+            $q->whereDate('expenses.expense_date', '<=', $to);
+        });
+
+        $expensesQuery->when($filters['year'] ?? null, function ($q, $year) {
+            $q->whereYear('expenses.expense_date', $year);
+        });
+
+        $expensesQuery->when($filters['month'] ?? null, function ($q, $month) {
+            $q->whereMonth('expenses.expense_date', $month);
+        });
+
+        $rows = $expensesQuery
+            ->join('treasury_accounts', 'expenses.treasury_id', '=', 'treasury_accounts.id')
+            ->select('treasury_accounts.account_name', DB::raw('SUM(expenses.amount) as total_expenses'))
+            ->groupBy('treasury_accounts.id', 'treasury_accounts.account_name')
+            ->get();
+
+        $result = [];
+
+        foreach (\App\Models\TreasuryAccount::all() as $treasury) {
+            $result[$treasury->account_name] = 0.0;
+        }
+
+        foreach ($rows as $row) {
+            $result[$row->account_name] = round((float) $row->total_expenses, 2);
+        }
+
+        return $result;
     }
 }

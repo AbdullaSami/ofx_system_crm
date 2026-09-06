@@ -7,6 +7,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ReportsResource extends JsonResource
 {
+    public static $wrap = 'data';
+
     /**
      * Transform the resource into an array.
      *
@@ -29,6 +31,7 @@ class ReportsResource extends JsonResource
             'advertisement_spending'    => $this->resource['advertisement_spending'] ?? [],
             'service_comparison'        => $this->resource['service_comparison'] ?? [],
             'contract_status_breakdown' => $this->resource['contract_status_breakdown'] ?? [],
+            'expenses'                  => $this->resource['expenses'] ?? [],
         ];
     }
 }

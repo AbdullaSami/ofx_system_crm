@@ -33,7 +33,7 @@ function uniqueCode(): string
  */
 function createUserWithRole(string $roleName): User
 {
-    Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+    (new \Database\Seeders\RoleAndPermissionsSeeder())->run();
 
     $user = User::factory()->create();
     $user->assignRole($roleName);
@@ -172,7 +172,7 @@ test('guest cannot access reports dashboard', function () {
 // 2. Admin receives the full dashboard payload
 // ─────────────────────────────────────────────
 
-test('admin can access reports dashboard and receives all 12 keys', function () {
+test('admin can access reports dashboard and receives all keys including expenses', function () {
     $admin = createUserWithRole('Admin');
 
     $response = $this
@@ -182,18 +182,21 @@ test('admin can access reports dashboard and receives all 12 keys', function () 
     $response->assertOk();
 
     $response->assertJsonStructure([
-        'best_selling_service',
-        'top_sales_by_revenue',
-        'top_sales_by_contracts',
-        'monthly_sales',
-        'top_customers',
-        'latest_contracts',
-        'lead_sources',
-        'conversion_rate',
-        'registered_collections',
-        'collected_amount',
-        'payment_method_comparison',
-        'advertisement_spending',
+        'data' => [
+            'best_selling_service',
+            'top_sales_by_revenue',
+            'top_sales_by_contracts',
+            'monthly_sales',
+            'top_customers',
+            'latest_contracts',
+            'lead_sources',
+            'conversion_rate',
+            'registered_collections',
+            'collected_amount',
+            'payment_method_comparison',
+            'advertisement_spending',
+            'expenses',
+        ],
     ]);
 });
 
@@ -245,7 +248,7 @@ test('best_selling_service returns the correct service name and contract count',
     expect($bestService['name'])->toBe('SEO Boost');
     expect($bestService['total_contracts'])->toBe(2);
     expect((float) $bestService['total_revenue'])->toBeGreaterThan(0);
-    expect($bestService['percentage_of_total_sales'])->toBe(100.0);
+    expect((float) $bestService['percentage_of_total_sales'])->toBe(100.0);
 });
 
 // ─────────────────────────────────────────────
@@ -270,7 +273,7 @@ test('top_sales_by_revenue returns employees ordered by total revenue descending
 
     $topSales = $response->json('data.top_sales_by_revenue');
     expect($topSales[0]['sales_name'])->toBe('Alice');
-    expect($topSales[0]['total_revenue'])->toBe(10000.0);
+    expect((float) $topSales[0]['total_revenue'])->toBe(10000.0);
     expect($topSales[1]['sales_name'])->toBe('Bob');
 });
 
@@ -305,15 +308,15 @@ test('top_sales_by_contracts returns employees ordered by contract count descend
 // 7. Monthly Sales — grouping
 // ─────────────────────────────────────────────
 
-test('monthly_sales returns data grouped by month', function () {
+test('monthly_sales returns data grouped by month using amount_paid', function () {
     $admin   = createUserWithRole('Admin');
     $emp     = makeEmployee('Rep', 'rep');
     $client  = createClient();
     $service = createService();
 
-    createContract($emp, $client, $service, ['start_date' => '2026-03-01', 'amount' => 1000]);
-    createContract($emp, $client, $service, ['start_date' => '2026-03-15', 'amount' => 2000]);
-    createContract($emp, $client, $service, ['start_date' => '2026-04-01', 'amount' => 500]);
+    createContract($emp, $client, $service, ['start_date' => '2026-03-01', 'amount' => 1000, 'amount_paid' => 1000]);
+    createContract($emp, $client, $service, ['start_date' => '2026-03-15', 'amount' => 2000, 'amount_paid' => 2000]);
+    createContract($emp, $client, $service, ['start_date' => '2026-04-01', 'amount' => 500,  'amount_paid' => 500]);
 
     $response = $this
         ->actingAs($admin, 'sanctum')
@@ -326,7 +329,7 @@ test('monthly_sales returns data grouped by month', function () {
     $march = $monthly->firstWhere('month', '2026-03');
     expect($march)->not->toBeNull();
     expect($march['number_of_contracts'])->toBe(2);
-    expect($march['total_revenue'])->toBe(3000.0);
+    expect((float) $march['total_revenue'])->toBe(3000.0);
 
     $april = $monthly->firstWhere('month', '2026-04');
     expect($april)->not->toBeNull();
@@ -343,8 +346,8 @@ test('monthly_sales respects year filter', function () {
     $client  = createClient();
     $service = createService();
 
-    createContract($emp, $client, $service, ['start_date' => '2025-06-01', 'amount' => 9999]);
-    createContract($emp, $client, $service, ['start_date' => '2026-06-01', 'amount' => 1234]);
+    createContract($emp, $client, $service, ['start_date' => '2025-06-01', 'amount' => 9999, 'amount_paid' => 9999]);
+    createContract($emp, $client, $service, ['start_date' => '2026-06-01', 'amount' => 1234, 'amount_paid' => 1234]);
 
     $response = $this
         ->actingAs($admin, 'sanctum')
@@ -357,7 +360,7 @@ test('monthly_sales respects year filter', function () {
 
     $june2026 = $monthly->firstWhere('month', '2026-06');
     expect($june2026)->not->toBeNull();
-    expect($june2026['total_revenue'])->toBe(1234.0);
+    expect((float) $june2026['total_revenue'])->toBe(1234.0);
 });
 
 // ─────────────────────────────────────────────
@@ -469,7 +472,7 @@ test('conversion_rate calculates total, converted, lost and percentage correctly
     expect($cr['total_leads'])->toBe(4);
     expect($cr['converted_leads'])->toBe(2);
     expect($cr['lost_leads'])->toBe(1);
-    expect($cr['conversion_percentage'])->toBe(50.0);
+    expect((float) $cr['conversion_percentage'])->toBe(50.0);
 });
 
 // ─────────────────────────────────────────────
@@ -493,7 +496,7 @@ test('registered_collections sums amount_due across all collections', function (
     $response->assertOk();
 
     $rc = $response->json('data.registered_collections');
-    expect($rc['total_amount'])->toBe(1250.0);
+    expect((float) $rc['total_amount'])->toBe(1250.0);
     expect($rc['number_of_transactions'])->toBe(2);
 });
 
@@ -704,4 +707,50 @@ test('service filter restricts contract-based reports to contracts with that ser
     $topSales = $response->json('data.top_sales_by_revenue');
     expect((float) $topSales[0]['total_revenue'])->toBe(2000.0);
     expect($topSales[0]['number_of_contracts'])->toBe(1);
+});
+
+// ─────────────────────────────────────────────
+// 20. Expenses per Treasury — date range filtering
+// ─────────────────────────────────────────────
+
+test('treasury expenses in dashboard returns totals grouped by treasury and respects date range', function () {
+    $admin = createUserWithRole('Admin');
+    $treasuryA = createTreasury('Safe A', 10000);
+    $treasuryB = createTreasury('Safe B', 10000);
+
+    Expense::create([
+        'treasury_id'  => $treasuryA,
+        'expense_type' => 'general',
+        'amount'       => 500.00,
+        'expense_date' => '2026-09-01',
+        'description'  => 'Sep Expense A',
+    ]);
+
+    Expense::create([
+        'treasury_id'  => $treasuryA,
+        'expense_type' => 'general',
+        'amount'       => 300.00,
+        'expense_date' => '2026-09-05',
+        'description'  => 'Out of range Expense A',
+    ]);
+
+    Expense::create([
+        'treasury_id'  => $treasuryB,
+        'expense_type' => 'general',
+        'amount'       => 1200.00,
+        'expense_date' => '2026-09-02',
+        'description'  => 'Sep Expense B',
+    ]);
+
+    $response = $this
+        ->actingAs($admin, 'sanctum')
+        ->getJson('/api/reports/dashboard?from_date=2026-09-01&to_date=2026-09-02');
+
+    $response->assertOk();
+
+    $expenses = $response->json('data.expenses');
+    expect($expenses)->toHaveKey('Safe A');
+    expect($expenses)->toHaveKey('Safe B');
+    expect((float) $expenses['Safe A'])->toBe(500.0);
+    expect((float) $expenses['Safe B'])->toBe(1200.0);
 });

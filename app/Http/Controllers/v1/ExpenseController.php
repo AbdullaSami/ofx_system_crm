@@ -28,15 +28,32 @@ class ExpenseController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'from_date'    => 'nullable|date',
+            'to_date'      => 'nullable|date|after_or_equal:from_date',
+            'from'         => 'nullable|date',
+            'to'           => 'nullable|date|after_or_equal:from',
+            'treasury_id'  => 'nullable|integer|exists:treasury_accounts,id',
+            'amount'       => 'nullable|numeric|min:0',
+            'min_amount'   => 'nullable|numeric|min:0',
+            'max_amount'   => 'nullable|numeric|min:0',
+            'expense_type' => 'nullable|string',
+            'per_page'     => 'nullable|integer|min:1|max:100',
+            'page'         => 'nullable|integer|min:1',
+        ]);
+
         // Apply data-scope via the model scope (filters by created_by for own-scoped users)
         $query = Expense::query()->visibleTo(auth()->user());
 
-        $expenses = $this->expenseService->listScoped(
+        $result = $this->expenseService->listScoped(
             $query,
-            $request->only(['treasury_id', 'expense_type', 'from', 'to', 'per_page'])
+            $validated
         );
 
-        return response()->json(ExpenseResource::collection($expenses)->response()->getData(true));
+        $responseData = ExpenseResource::collection($result['expenses'])->response()->getData(true);
+        $responseData['total_expenses'] = round((float) $result['total_expenses'], 2);
+
+        return response()->json($responseData);
     }
 
     public function store(StoreExpenseRequest $request): JsonResponse
