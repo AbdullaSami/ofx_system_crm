@@ -155,7 +155,8 @@ class ReportsService
             ->select(
                 DB::raw("{$monthRaw} as month_label"),
                 DB::raw('COUNT(id) as number_of_contracts'),
-                DB::raw('SUM(amount_paid) as total_revenue')
+                DB::raw('SUM(amount_paid) as total_revenue'),
+                DB::raw('SUM(amount) as total_contract_value')
             )
             ->groupBy(DB::raw($monthRaw))
             ->orderBy(DB::raw($monthRaw), 'desc')
@@ -164,6 +165,7 @@ class ReportsService
                 'month' => $item->month_label ?: 'Unknown',
                 'number_of_contracts' => (int) $item->number_of_contracts,
                 'total_revenue' => round((float) $item->total_revenue, 2),
+                'total_contract_value' => round((float) $item->total_contract_value, 2),
             ])
             ->toArray();
     }
