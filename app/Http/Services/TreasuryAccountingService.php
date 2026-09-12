@@ -16,7 +16,8 @@ class TreasuryAccountingService
     /**
      * Record a treasury transaction and update account balance.
      * Now returns the created transaction (needed by controller to link back)
-     * and locks the account row inside the transaction to avoid double-spend race.
+     * and locks the account row inside the transaction to prevent lost balance updates.
+     * Debits may take the account balance below zero.
      */
     public function recordTransaction($treasuryAccountId, $amount, $type, $description = null)
     {
@@ -26,10 +27,6 @@ class TreasuryAccountingService
             $treasuryAccount = TreasuryAccount::where('id', $treasuryAccountId)
                 ->lockForUpdate()
                 ->firstOrFail();
-
-            if ($type === 'debit' && $treasuryAccount->balance < $amount) {
-                throw new \RuntimeException('Insufficient balance in treasury account');
-            }
 
             $transaction = TreasuryTransaction::create([
                 'treasury_account_id' => $treasuryAccountId,

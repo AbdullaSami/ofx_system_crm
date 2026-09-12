@@ -286,8 +286,7 @@ class EmployeesController extends BaseController
 
     /**
      * Pay salary — now auto-deducts any active/unsettled salary advances,
-     * locks treasury row to prevent race conditions, and validates balance
-     * before creating the expense (old code created expense with no balance check).
+     * and locks the treasury row to prevent race conditions while allowing overdrafts.
      */
     public function paySalary(Request $request, $id)
     {
@@ -326,17 +325,13 @@ class EmployeesController extends BaseController
                     throw new \RuntimeException('Net salary is negative after advance deductions — check advance amount vs salary.');
                 }
 
-                // lock treasury account BEFORE checking balance (old code checked after fetch = race condition)
+                // Lock the treasury account before updating its balance.
                 $treasuryAccount = TreasuryAccount::where('account_name', $validatedData['payment_method'])
                     ->lockForUpdate()
                     ->first();
 
                 if (!$treasuryAccount) {
                     throw new \RuntimeException('Treasury account not found');
-                }
-
-                if ($treasuryAccount->balance < $netAmount) {
-                    throw new \RuntimeException('Insufficient balance in treasury account');
                 }
 
                 // create the salary record, storing advance_deduction separately so it's auditable
@@ -391,7 +386,7 @@ class EmployeesController extends BaseController
                 'salary'  => $result,
             ], 200);
         } catch (\RuntimeException $e) {
-            // expected business errors (no account / insufficient balance / negative net)
+            // expected business errors (no account / negative net)
             return response()->json(['message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to pay salary', 'error' => $e->getMessage()], 500);

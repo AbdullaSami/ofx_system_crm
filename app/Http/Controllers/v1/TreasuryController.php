@@ -32,7 +32,7 @@ class TreasuryController extends BaseController
         try {
             $validated = $request->validate([
                 'account_name' => 'required|string|max:255|unique:treasury_accounts,account_name',
-                'balance'      => 'nullable|numeric|min:0',
+                'balance'      => 'nullable|numeric',
                 'currency'     => 'nullable|string|max:10',
                 'description'  => 'nullable|string',
             ]);
@@ -58,7 +58,7 @@ class TreasuryController extends BaseController
         try {
             $validated = $request->validate([
                 'account_name' => 'sometimes|string|max:255|unique:treasury_accounts,account_name,' . $id,
-                'balance'      => 'sometimes|numeric|min:0',
+                'balance'      => 'sometimes|numeric',
                 'currency'     => 'nullable|string|max:10',
                 'description'  => 'nullable|string',
             ]);

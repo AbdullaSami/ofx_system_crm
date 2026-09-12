@@ -64,10 +64,6 @@ class SalaryAdvanceController extends BaseController
                     throw new \RuntimeException('Treasury account not found');
                 }
 
-                if ($treasuryAccount->balance < $validated['amount']) {
-                    throw new \RuntimeException('Insufficient balance in treasury account');
-                }
-
                 // debit treasury (service handles ledger + balance update)
                 $treasuryService = new TreasuryAccountingService();
                 $treasuryTransaction = $treasuryService->recordTransaction(
@@ -92,7 +88,7 @@ class SalaryAdvanceController extends BaseController
 
             return response()->json($salaryAdvance, 201);
         } catch (\RuntimeException $e) {
-            // expected business errors (no account / insufficient balance)
+            // expected business errors (missing treasury account)
             return response()->json(['error' => $e->getMessage()], 400);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create salary advance', 'message' => $e->getMessage()], 500);
@@ -152,10 +148,6 @@ class SalaryAdvanceController extends BaseController
 
                     if (!$newAccount) {
                         throw new \RuntimeException('New treasury account not found');
-                    }
-
-                    if ($newAccount->balance < $newAmount) {
-                        throw new \RuntimeException('Insufficient balance in treasury account');
                     }
 
                     $newTransaction = $treasuryService->recordTransaction(

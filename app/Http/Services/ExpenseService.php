@@ -10,7 +10,6 @@ use App\Models\TreasuryAccount;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 
 class ExpenseService
 {
@@ -104,12 +103,6 @@ class ExpenseService
         return DB::transaction(function () use ($data, $files) {
             $treasury = TreasuryAccount::lockForUpdate()->findOrFail($data['treasury_id']);
 
-            if ($treasury->balance < $data['amount'] && $data['expense_type'] != Expense::TYPE_WAGE) {
-                throw ValidationException::withMessages([
-                    'amount' => 'Treasury balance is insufficient for this expense.',
-                ]);
-            }
-
             $expensableClass = $this->expensableClassFor($data['expense_type']);
 
             $expense = Expense::create([
@@ -146,12 +139,6 @@ class ExpenseService
             $newTreasury = $newTreasuryId === $oldTreasury->id
                 ? $oldTreasury
                 : TreasuryAccount::lockForUpdate()->findOrFail($newTreasuryId);
-
-            if ($newTreasury->balance < $newAmount) {
-                throw ValidationException::withMessages([
-                    'amount' => 'Treasury balance is insufficient for this expense.',
-                ]);
-            }
 
             $expenseType = $data['expense_type'] ?? $expense->expense_type;
             $expensableClass = $this->expensableClassFor($expenseType);
